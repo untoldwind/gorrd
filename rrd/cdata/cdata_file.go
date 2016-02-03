@@ -8,6 +8,8 @@ import (
 	"github.com/go-errors/errors"
 )
 
+// CDataFile Helper to access files created from C code by directly mapping structs
+// Honours byte order as well as byte alignment
 type CDataFile struct {
 	file          *os.File
 	position      int64
@@ -15,7 +17,8 @@ type CDataFile struct {
 	byteAlignment int
 }
 
-func OpenDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteAlignment int) (*CDataFile, error) {
+// Open a CDataFile
+func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteAlignment int) (*CDataFile, error) {
 	flag := os.O_RDWR
 	if readOnly {
 		flag = os.O_RDONLY
@@ -34,6 +37,7 @@ func OpenDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteAl
 	}, nil
 }
 
+// Close the CDataFile
 func (f *CDataFile) Close() error {
 	return f.file.Close()
 }
@@ -100,6 +104,10 @@ func (f *CDataFile) ReadUnivals(count int) ([]unival, error) {
 		result[i] = unival(f.byteOrder.Uint64(data[i*8 : (i+1)*8]))
 	}
 	return result, nil
+}
+
+func (f *CDataFile) CurPosition() uin64 {
+	return f.position
 }
 
 func (f *CDataFile) alignOffset() error {

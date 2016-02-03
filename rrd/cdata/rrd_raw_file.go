@@ -4,8 +4,9 @@ import (
 	"encoding/binary"
 
 	"fmt"
-	"github.com/untoldwind/gorrd/rrd"
 	"time"
+
+	"github.com/untoldwind/gorrd/rrd"
 )
 
 const rrdCookie = "RRD"
@@ -25,10 +26,12 @@ type RrdRawFile struct {
 
 	pdpPreps []*RrdPdpPrep
 	cdpPreps []*RrdCdpPrep
+
+	rraPtrs []RrdRraPtr
 }
 
 func OpenRrdRawFile(name string, readOnly bool) (*RrdRawFile, error) {
-	dataFile, err := OpenDataFile(name, readOnly, binary.LittleEndian, 8)
+	dataFile, err := OpenCDataFile(name, readOnly, binary.LittleEndian, 8)
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +54,9 @@ func OpenRrdRawFile(name string, readOnly bool) (*RrdRawFile, error) {
 	}
 	for _, cdpPrep := range rrdFile.cdpPreps {
 		fmt.Printf("%#v\n", cdpPrep)
+	}
+	for _, rraPtr := range rrdFile.rraPtrs {
+		fmt.Printf("%#v\n", rraPtr)
 	}
 	return rrdFile, nil
 }
@@ -76,6 +82,9 @@ func (f *RrdRawFile) read() error {
 		return err
 	}
 	if err := f.readCdpPreps(); err != nil {
+		return err
+	}
+	if err := f.readRraPtrs(); err != nil {
 		return err
 	}
 
