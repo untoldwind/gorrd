@@ -5,6 +5,8 @@ import (
 	"io"
 	"strconv"
 	"time"
+
+	"github.com/untoldwind/gorrd/rrd"
 )
 
 type XmlDumber struct {
@@ -53,6 +55,14 @@ func (d *XmlDumber) DumpString(field, value string) error {
 	})
 }
 
+func (d *XmlDumber) DumpDouble(field string, value float64) error {
+	return d.writeTokens([]xml.Token{
+		xml.StartElement{Name: xml.Name{Local: field}},
+		xml.CharData(strconv.FormatFloat(value, 'e', 10, 64)),
+		xml.EndElement{Name: xml.Name{Local: field}},
+	})
+}
+
 func (d *XmlDumber) DumpUnsignedLong(field string, value uint64) error {
 	return d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
@@ -68,6 +78,17 @@ func (d *XmlDumber) DumpTime(field string, value time.Time) error {
 		xml.EndElement{Name: xml.Name{Local: field}},
 		xml.Comment(value.String()),
 	})
+}
+
+func (d *XmlDumber) DumpSubFields(field string) (rrd.RrdDumper, error) {
+	dumper := &XmlDumber{
+		encoder: d.encoder,
+		tag:     field,
+	}
+	if err := d.encoder.EncodeToken(xml.StartElement{Name: xml.Name{Local: field}}); err != nil {
+		return nil, err
+	}
+	return dumper, nil
 }
 
 func (d *XmlDumber) Finalize() error {

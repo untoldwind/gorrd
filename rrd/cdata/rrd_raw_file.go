@@ -3,8 +3,6 @@ package cdata
 import (
 	"encoding/binary"
 
-	"time"
-
 	"github.com/untoldwind/gorrd/rrd"
 )
 
@@ -13,11 +11,6 @@ const rrdFloatCookie = 8.642135E130
 
 type RrdRawFile struct {
 	dataFile *CDataFile
-
-	datasources []rrd.RrdDatasource
-	rras        []rrd.Rra
-
-	lastUpdate time.Time
 
 	pdpPreps []*RrdPdpPrep
 	cdpPreps []*RrdCdpPrep
@@ -38,15 +31,30 @@ func OpenRrdRawFile(name string, readOnly bool) (*rrd.Rrd, error) {
 	if err != nil {
 		return nil, err
 	}
+	datasources, err := readDatasources(header, dataFile)
+	if err != nil {
+		return nil, err
+	}
+	rras, err := readRras(header, dataFile)
+	if err != nil {
+		return nil, err
+	}
+	lastUpdate, err := readLiveHead(dataFile)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := rrdFile.read(header); err != nil {
 		dataFile.Close()
 		return nil, err
 	}
 
 	return &rrd.Rrd{
-		Store:      rrdFile,
-		Step:       header.pdpStep,
-		LastUpdate: rrdFile.lastUpdate,
+		Store:       rrdFile,
+		Step:        header.pdpStep,
+		LastUpdate:  lastUpdate,
+		Datasources: datasources,
+		Rras:        rras,
 	}, nil
 }
 
@@ -55,15 +63,6 @@ func (f *RrdRawFile) Close() {
 }
 
 func (f *RrdRawFile) read(header *rrdRawHeader) error {
-	if err := f.readDatasources(header); err != nil {
-		return err
-	}
-	if err := f.readRras(header); err != nil {
-		return err
-	}
-	if err := f.readLiveHead(); err != nil {
-		return err
-	}
 	if err := f.readPdpPreps(header); err != nil {
 		return err
 	}

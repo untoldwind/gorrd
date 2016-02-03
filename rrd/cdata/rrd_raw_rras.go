@@ -5,33 +5,33 @@ import (
 	"github.com/untoldwind/gorrd/rrd"
 )
 
-func (f *RrdRawFile) readRras(header *rrdRawHeader) error {
-	f.rras = make([]rrd.Rra, header.rraCount)
+func readRras(header *rrdRawHeader, dataFile *CDataFile) ([]rrd.Rra, error) {
+	result := make([]rrd.Rra, header.rraCount)
 
 	var err error
-	for i := range f.rras {
-		f.rras[i], err = f.readRra()
+	for i := range result {
+		result[i], err = readRra(dataFile)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return result, nil
 }
 
-func (f *RrdRawFile) readRra() (rrd.Rra, error) {
-	rraType, err := f.dataFile.ReadCString(20)
+func readRra(dataFile *CDataFile) (rrd.Rra, error) {
+	rraType, err := dataFile.ReadCString(20)
 	if err != nil {
 		return nil, err
 	}
-	rowCount, err := f.dataFile.ReadUnsignedLong()
+	rowCount, err := dataFile.ReadUnsignedLong()
 	if err != nil {
 		return nil, err
 	}
-	pdpCount, err := f.dataFile.ReadUnsignedLong()
+	pdpCount, err := dataFile.ReadUnsignedLong()
 	if err != nil {
 		return nil, err
 	}
-	parameters, err := f.dataFile.ReadUnivals(10)
+	parameters, err := dataFile.ReadUnivals(10)
 	if err != nil {
 		return nil, err
 	}

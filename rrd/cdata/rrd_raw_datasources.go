@@ -5,17 +5,17 @@ import (
 	"github.com/untoldwind/gorrd/rrd"
 )
 
-func (f *RrdRawFile) readDatasources(header *rrdRawHeader) error {
-	f.datasources = make([]rrd.RrdDatasource, header.datasourceCount)
+func readDatasources(header *rrdRawHeader, dataFile *CDataFile) ([]rrd.RrdDatasource, error) {
+	result := make([]rrd.RrdDatasource, header.datasourceCount)
 
 	var err error
-	for i := range f.datasources {
-		f.datasources[i], err = readDatasource(f.dataFile)
+	for i := range result {
+		result[i], err = readDatasource(dataFile)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return result, nil
 }
 
 func readDatasource(dataFile *CDataFile) (rrd.RrdDatasource, error) {
@@ -44,16 +44,16 @@ func readDatasource(dataFile *CDataFile) (rrd.RrdDatasource, error) {
 		}, nil
 	case rrd.RrdDatasourceTypeCounter:
 		return &rrd.RrdCounterDatasource{
-			rrd.RrdDatasourceAbstractLong{
+			rrd.RrdDatasourceAbstract{
 				Name:      name,
 				Heartbeat: parameters[0].AsUnsignedLong(),
-				Min:       parameters[1].AsUnsignedLong(),
-				Max:       parameters[2].AsUnsignedLong(),
+				Min:       parameters[1].AsDouble(),
+				Max:       parameters[2].AsDouble(),
 			},
 		}, nil
 	case rrd.RrdDatasourceTypeDCounter:
 		return &rrd.RrdDCounterDatasource{
-			rrd.RrdDatasourceAbstractDouble{
+			rrd.RrdDatasourceAbstract{
 				Name:      name,
 				Heartbeat: parameters[0].AsUnsignedLong(),
 				Min:       parameters[1].AsDouble(),
@@ -62,7 +62,7 @@ func readDatasource(dataFile *CDataFile) (rrd.RrdDatasource, error) {
 		}, nil
 	case rrd.RrdDatasourceTypeDDerive:
 		return &rrd.RrdDDeriveDatasource{
-			rrd.RrdDatasourceAbstractDouble{
+			rrd.RrdDatasourceAbstract{
 				Name:      name,
 				Heartbeat: parameters[0].AsUnsignedLong(),
 				Min:       parameters[1].AsDouble(),
@@ -80,11 +80,11 @@ func readDatasource(dataFile *CDataFile) (rrd.RrdDatasource, error) {
 		}, nil
 	case rrd.RrdDatasourceTypeGauge:
 		return &rrd.RrdGaugeDatasource{
-			rrd.RrdDatasourceAbstractLong{
+			rrd.RrdDatasourceAbstract{
 				Name:      name,
 				Heartbeat: parameters[0].AsUnsignedLong(),
-				Min:       parameters[1].AsUnsignedLong(),
-				Max:       parameters[2].AsUnsignedLong(),
+				Min:       parameters[1].AsDouble(),
+				Max:       parameters[2].AsDouble(),
 			},
 		}, nil
 	}
