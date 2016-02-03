@@ -1,0 +1,115 @@
+package cdata
+
+import (
+	"bytes"
+	"encoding/binary"
+	"os"
+
+	"github.com/go-errors/errors"
+)
+
+type CDataFile struct {
+	file          *os.File
+	position      int64
+	byteOrder     binary.ByteOrder
+	byteAlignment int
+}
+
+func OpenDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteAlignment int) (*CDataFile, error) {
+	flag := os.O_RDWR
+	if readOnly {
+		flag = os.O_RDONLY
+	}
+
+	file, err := os.OpenFile(name, flag, 0644)
+	if err != nil {
+		return nil, err
+	}
+
+	return &CDataFile{
+		file:          file,
+		position:      0,
+		byteOrder:     byteOrder,
+		byteAlignment: byteAlignment,
+	}, nil
+}
+
+func (f *CDataFile) Close() error {
+	return f.file.Close()
+}
+
+func (f *CDataFile) ReadBytes(len int) ([]byte, error) {
+	data := make([]byte, len)
+	if count, err := f.file.Read(data); err != nil {
+		return nil, err
+	} else if count != len {
+		return nil, errors.Errorf("Expected %d bytes (only %d read)", len, count)
+	}
+	f.position += int64(len)
+	return data, nil
+}
+
+func (f *CDataFile) ReadCString(maxLen int) (string, error) {
+	data, err := f.ReadBytes(maxLen)
+	if err != nil {
+		return "", nil
+	}
+	if idx := bytes.IndexByte(data, 0); idx >= 0 {
+		return string(data[:idx]), nil
+	}
+	return "", errors.Errorf("Expected null terminated string")
+}
+
+func (f *CDataFile) ReadUnival() (unival, error) {
+	if err := f.alignOffset(); err != nil {
+		return 0, err
+	}
+	data, err := f.ReadBytes(8)
+	if err != nil {
+		return 0, nil
+	}
+	return unival(f.byteOrder.Uint64(data)), nil
+}
+
+func (f *CDataFile) ReadDouble() (float64, error) {
+	unival, err := f.ReadUnival()
+	if err != nil {
+		return 0, err
+	}
+	return unival.AsDouble(), nil
+}
+
+func (f *CDataFile) ReadUnsignedLong() (uint64, error) {
+	unival, err := f.ReadUnival()
+	if err != nil {
+		return 0, err
+	}
+	return unival.AsUnsignedLong(), nil
+}
+
+func (f *CDataFile) ReadUnivals(count int) ([]unival, error) {
+	if err := f.alignOffset(); err != nil {
+		return nil, err
+	}
+	data, err := f.ReadBytes(8 * count)
+	if err != nil {
+		return nil, nil
+	}
+	result := make([]unival, count)
+	for i := range result {
+		result[i] = unival(f.byteOrder.Uint64(data[i*8 : (i+1)*8]))
+	}
+	return result, nil
+}
+
+func (f *CDataFile) alignOffset() error {
+	skip := int64(f.byteAlignment) - (f.position % int64(f.byteAlignment))
+	if skip >= int64(f.byteAlignment) {
+		return nil
+	}
+	if _, err := f.file.Seek(skip, 1); err != nil {
+		return err
+	}
+	f.position += skip
+	return nil
+}
