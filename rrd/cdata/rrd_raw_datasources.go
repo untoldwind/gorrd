@@ -5,12 +5,12 @@ import (
 	"github.com/untoldwind/gorrd/rrd"
 )
 
-func (f *RrdRawFile) readDatasources() error {
-	f.datasources = make([]rrd.RrdDatasource, f.datasourceCount)
+func (f *RrdRawFile) readDatasources(header *rrdRawHeader) error {
+	f.datasources = make([]rrd.RrdDatasource, header.datasourceCount)
 
 	var err error
 	for i := range f.datasources {
-		f.datasources[i], err = f.readDatasource()
+		f.datasources[i], err = readDatasource(f.dataFile)
 		if err != nil {
 			return err
 		}
@@ -18,16 +18,16 @@ func (f *RrdRawFile) readDatasources() error {
 	return nil
 }
 
-func (f *RrdRawFile) readDatasource() (rrd.RrdDatasource, error) {
-	name, err := f.dataFile.ReadCString(20)
+func readDatasource(dataFile *CDataFile) (rrd.RrdDatasource, error) {
+	name, err := dataFile.ReadCString(20)
 	if err != nil {
 		return nil, err
 	}
-	datasourceType, err := f.dataFile.ReadCString(20)
+	datasourceType, err := dataFile.ReadCString(20)
 	if err != nil {
 		return nil, err
 	}
-	parameters, err := f.dataFile.ReadUnivals(10)
+	parameters, err := dataFile.ReadUnivals(10)
 	if err != nil {
 		return nil, err
 	}

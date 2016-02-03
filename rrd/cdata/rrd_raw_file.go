@@ -3,7 +3,6 @@ package cdata
 import (
 	"encoding/binary"
 
-	"fmt"
 	"time"
 
 	"github.com/untoldwind/gorrd/rrd"
@@ -14,10 +13,6 @@ const rrdFloatCookie = 8.642135E130
 
 type RrdRawFile struct {
 	dataFile *CDataFile
-
-	datasourceCount uint64
-	rraCount        uint64
-	pdpStep         uint64
 
 	datasources []rrd.RrdDatasource
 	rras        []rrd.Rra
@@ -39,27 +34,19 @@ func OpenRrdRawFile(name string, readOnly bool) (*rrd.Rrd, error) {
 	rrdFile := &RrdRawFile{
 		dataFile: dataFile,
 	}
-	if err := rrdFile.read(); err != nil {
+	header, err := readRawHeader(dataFile)
+	if err != nil {
+		return nil, err
+	}
+	if err := rrdFile.read(header); err != nil {
 		dataFile.Close()
 		return nil, err
 	}
 
-	fmt.Printf("%#v\n", rrdFile)
-	for _, rra := range rrdFile.rras {
-		fmt.Printf("%#v\n", rra)
-	}
-	fmt.Printf("%v\n", rrdFile.lastUpdate)
-	for _, pdpPrep := range rrdFile.pdpPreps {
-		fmt.Printf("%#v\n", pdpPrep)
-	}
-	for _, cdpPrep := range rrdFile.cdpPreps {
-		fmt.Printf("%#v\n", cdpPrep)
-	}
-	for _, rraPtr := range rrdFile.rraPtrs {
-		fmt.Printf("%#v\n", rraPtr)
-	}
 	return &rrd.Rrd{
-		Store: rrdFile,
+		Store:      rrdFile,
+		Step:       header.pdpStep,
+		LastUpdate: rrdFile.lastUpdate,
 	}, nil
 }
 
@@ -67,26 +54,23 @@ func (f *RrdRawFile) Close() {
 	f.dataFile.Close()
 }
 
-func (f *RrdRawFile) read() error {
-	if err := f.readHeader(); err != nil {
+func (f *RrdRawFile) read(header *rrdRawHeader) error {
+	if err := f.readDatasources(header); err != nil {
 		return err
 	}
-	if err := f.readDatasources(); err != nil {
-		return err
-	}
-	if err := f.readRras(); err != nil {
+	if err := f.readRras(header); err != nil {
 		return err
 	}
 	if err := f.readLiveHead(); err != nil {
 		return err
 	}
-	if err := f.readPdpPreps(); err != nil {
+	if err := f.readPdpPreps(header); err != nil {
 		return err
 	}
-	if err := f.readCdpPreps(); err != nil {
+	if err := f.readCdpPreps(header); err != nil {
 		return err
 	}
-	if err := f.readRraPtrs(); err != nil {
+	if err := f.readRraPtrs(header); err != nil {
 		return err
 	}
 

@@ -3,6 +3,8 @@ package dump
 import (
 	"encoding/xml"
 	"io"
+	"strconv"
+	"time"
 )
 
 type XmlDumber struct {
@@ -48,6 +50,23 @@ func (d *XmlDumber) DumpString(field, value string) error {
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(value),
 		xml.EndElement{Name: xml.Name{Local: field}},
+	})
+}
+
+func (d *XmlDumber) DumpUnsignedLong(field string, value uint64) error {
+	return d.writeTokens([]xml.Token{
+		xml.StartElement{Name: xml.Name{Local: field}},
+		xml.CharData(strconv.FormatUint(value, 10)),
+		xml.EndElement{Name: xml.Name{Local: field}},
+	})
+}
+
+func (d *XmlDumber) DumpTime(field string, value time.Time) error {
+	return d.writeTokens([]xml.Token{
+		xml.StartElement{Name: xml.Name{Local: field}},
+		xml.CharData(strconv.FormatInt(value.Unix(), 10)),
+		xml.EndElement{Name: xml.Name{Local: field}},
+		xml.Comment(value.String()),
 	})
 }
 

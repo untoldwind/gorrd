@@ -5,8 +5,8 @@ type RrdPdpPrep struct {
 	scratch             []unival
 }
 
-func (f *RrdRawFile) readPdpPreps() error {
-	f.pdpPreps = make([]*RrdPdpPrep, f.datasourceCount)
+func (f *RrdRawFile) readPdpPreps(header *rrdRawHeader) error {
+	f.pdpPreps = make([]*RrdPdpPrep, header.datasourceCount)
 
 	var err error
 	for i := range f.pdpPreps {

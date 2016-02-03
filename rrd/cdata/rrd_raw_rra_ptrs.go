@@ -2,8 +2,8 @@ package cdata
 
 type RrdRraPtr uint64
 
-func (f *RrdRawFile) readRraPtrs() error {
-	f.rraPtrs = make([]RrdRraPtr, f.rraCount)
+func (f *RrdRawFile) readRraPtrs(header *rrdRawHeader) error {
+	f.rraPtrs = make([]RrdRraPtr, header.rraCount)
 	var err error
 	for i := range f.rraPtrs {
 		f.rraPtrs[i], err = f.readRraPtr()

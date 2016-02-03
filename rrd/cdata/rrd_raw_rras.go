@@ -5,8 +5,8 @@ import (
 	"github.com/untoldwind/gorrd/rrd"
 )
 
-func (f *RrdRawFile) readRras() error {
-	f.rras = make([]rrd.Rra, f.rraCount)
+func (f *RrdRawFile) readRras(header *rrdRawHeader) error {
+	f.rras = make([]rrd.Rra, header.rraCount)
 
 	var err error
 	for i := range f.rras {
