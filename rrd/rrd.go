@@ -9,5 +9,8 @@ func (r *Rrd) Close() {
 }
 
 func (r *Rrd) DumpTo(dumper RrdDumper) error {
+	if err := dumper.DumpString("version", "0003"); err != nil {
+		return err
+	}
 	return dumper.Finalize()
 }

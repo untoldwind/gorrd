@@ -35,7 +35,7 @@ func dumpCommand(ctx *cli.Context) {
 	}
 	defer rrd.Close()
 
-	xmlDumper, err := dump.NewXmlDumper(ctx.App.Writer)
+	xmlDumper, err := dump.NewXmlDumper(ctx.App.Writer, true)
 	if err != nil {
 		fmt.Fprintln(ctx.App.Writer, err)
 		return
