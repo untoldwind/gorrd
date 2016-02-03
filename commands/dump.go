@@ -5,6 +5,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/untoldwind/gorrd/rrd/cdata"
+	"github.com/untoldwind/gorrd/rrd/dump"
 )
 
 // Command line create command
@@ -27,10 +28,20 @@ func dumpCommand(ctx *cli.Context) {
 		return
 	}
 
-	rrdFile, err := cdata.OpenRrdRawFile(args.First(), true)
+	rrd, err := cdata.OpenRrdRawFile(args.First(), true)
 	if err != nil {
 		fmt.Fprintln(ctx.App.Writer, err)
 		return
 	}
-	defer rrdFile.Close()
+	defer rrd.Close()
+
+	xmlDumper, err := dump.NewXmlDumper(ctx.App.Writer)
+	if err != nil {
+		fmt.Fprintln(ctx.App.Writer, err)
+		return
+	}
+	if err := rrd.DumpTo(xmlDumper); err != nil {
+		fmt.Fprintln(ctx.App.Writer, err)
+		return
+	}
 }

@@ -12,13 +12,13 @@ import (
 // Honours byte order as well as byte alignment
 type CDataFile struct {
 	file          *os.File
-	position      int64
+	position      uint64
 	byteOrder     binary.ByteOrder
-	byteAlignment int
+	byteAlignment uint64
 }
 
 // Open a CDataFile
-func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteAlignment int) (*CDataFile, error) {
+func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteAlignment uint64) (*CDataFile, error) {
 	flag := os.O_RDWR
 	if readOnly {
 		flag = os.O_RDONLY
@@ -49,7 +49,7 @@ func (f *CDataFile) ReadBytes(len int) ([]byte, error) {
 	} else if count != len {
 		return nil, errors.Errorf("Expected %d bytes (only %d read)", len, count)
 	}
-	f.position += int64(len)
+	f.position += uint64(len)
 	return data, nil
 }
 
@@ -106,16 +106,16 @@ func (f *CDataFile) ReadUnivals(count int) ([]unival, error) {
 	return result, nil
 }
 
-func (f *CDataFile) CurPosition() uin64 {
+func (f *CDataFile) CurPosition() uint64 {
 	return f.position
 }
 
 func (f *CDataFile) alignOffset() error {
-	skip := int64(f.byteAlignment) - (f.position % int64(f.byteAlignment))
-	if skip >= int64(f.byteAlignment) {
+	skip := f.byteAlignment - (f.position % f.byteAlignment)
+	if skip >= f.byteAlignment {
 		return nil
 	}
-	if _, err := f.file.Seek(skip, 1); err != nil {
+	if _, err := f.file.Seek(int64(skip), 1); err != nil {
 		return err
 	}
 	f.position += skip

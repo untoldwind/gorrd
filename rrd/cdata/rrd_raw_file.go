@@ -30,7 +30,7 @@ type RrdRawFile struct {
 	rraPtrs []RrdRraPtr
 }
 
-func OpenRrdRawFile(name string, readOnly bool) (*RrdRawFile, error) {
+func OpenRrdRawFile(name string, readOnly bool) (*rrd.Rrd, error) {
 	dataFile, err := OpenCDataFile(name, readOnly, binary.LittleEndian, 8)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,9 @@ func OpenRrdRawFile(name string, readOnly bool) (*RrdRawFile, error) {
 	for _, rraPtr := range rrdFile.rraPtrs {
 		fmt.Printf("%#v\n", rraPtr)
 	}
-	return rrdFile, nil
+	return &rrd.Rrd{
+		Store: rrdFile,
+	}, nil
 }
 
 func (f *RrdRawFile) Close() {

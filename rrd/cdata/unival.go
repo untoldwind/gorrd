@@ -1,11 +1,11 @@
 package cdata
 
-import "math"
+import "unsafe"
 
 type unival uint64
 
 func (u unival) AsDouble() float64 {
-	return math.Float64frombits(uint64(u))
+	return *(*float64)(unsafe.Pointer(&u))
 }
 
 func (u unival) AsLong() int64 {
