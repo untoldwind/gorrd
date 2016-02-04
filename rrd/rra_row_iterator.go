@@ -1,6 +1,9 @@
 package rrd
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type RraRow struct {
 	Timestamp time.Time
@@ -11,6 +14,14 @@ func (r *RraRow) DumpTo(dumper RrdDumper) error {
 	row, err := dumper.DumpSubFields("row")
 	if err != nil {
 		return err
+	}
+	if err := dumper.DumpComment(fmt.Sprintf("%s / %d", r.Timestamp.String(), r.Timestamp.Unix())); err != nil {
+		return err
+	}
+	for _, value := range r.Values {
+		if err := dumper.DumpDouble("v", value); err != nil {
+			return err
+		}
 	}
 	return row.Finalize()
 }

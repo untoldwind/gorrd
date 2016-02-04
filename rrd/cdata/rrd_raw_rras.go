@@ -10,7 +10,7 @@ func (f *RrdRawFile) readRras() ([]rrd.Rra, error) {
 
 	var err error
 	for i := range result {
-		result[i], err = readRra(f.dataFile)
+		result[i], err = readRra(f.dataFile, i)
 		if err != nil {
 			return nil, err
 		}
@@ -18,7 +18,7 @@ func (f *RrdRawFile) readRras() ([]rrd.Rra, error) {
 	return result, nil
 }
 
-func readRra(dataFile *CDataFile) (rrd.Rra, error) {
+func readRra(dataFile *CDataFile, index int) (rrd.Rra, error) {
 	rraType, err := dataFile.ReadCString(20)
 	if err != nil {
 		return nil, err
@@ -40,6 +40,7 @@ func readRra(dataFile *CDataFile) (rrd.Rra, error) {
 	case rrd.RraTypeAverage:
 		return &rrd.RraAverage{
 			rrd.RraAbstractGeneric{
+				Index:        index,
 				RowCount:     rowCount,
 				PdpPerRow:    pdpPerRow,
 				XFilesFactor: parameters[0].AsDouble(),

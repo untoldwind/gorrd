@@ -94,15 +94,17 @@ func (f *RrdRawFile) calculateRraStarts(rras []rrd.Rra) {
 }
 
 func (f *RrdRawFile) RowIterator(rra rrd.Rra) (rrd.RraRowIterator, error) {
+	stepPerRow := time.Duration(f.header.pdpStep*rra.GetPdpPerRow()) * time.Second
+	startTime := f.lastUpdate.Truncate(stepPerRow).Add(-time.Duration(rra.GetRowCount()-1) * stepPerRow)
 	iterator := &rrdRawRowIterator{
 		dataFile:   f.dataFile,
 		row:        0,
 		rowCount:   rra.GetRowCount(),
+		colCount:   f.header.datasourceCount,
 		rraStart:   f.rraStarts[rra.GetIndex()],
 		rraPtr:     f.rraPtrs[rra.GetIndex()],
-		lastUpdate: f.lastUpdate,
-		pdpStep:    int64(f.header.pdpStep),
-		pdpPerRow:  int64(rra.GetPdpPerRow()),
+		startTime:  startTime,
+		stepPerRow: stepPerRow,
 	}
 	return iterator, nil
 }

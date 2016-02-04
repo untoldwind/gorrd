@@ -47,6 +47,10 @@ func (d *XmlDumber) writeHeader() error {
 	})
 }
 
+func (d *XmlDumber) DumpComment(comment string) error {
+	return d.encoder.EncodeToken(xml.Comment(comment))
+}
+
 func (d *XmlDumber) DumpString(field, value string) error {
 	return d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},

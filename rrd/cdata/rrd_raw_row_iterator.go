@@ -3,44 +3,50 @@ package cdata
 import (
 	"time"
 
-	"github.com/go-errors/errors"
 	"github.com/untoldwind/gorrd/rrd"
 )
 
 type rrdRawRowIterator struct {
 	dataFile   *CDataFile
-	row        int64
+	row        uint64
+	colCount   uint64
 	rowCount   uint64
 	rraStart   uint64
 	rraPtr     uint64
-	lastUpdate time.Time
-	pdpStep    int64
-	pdpPerRow  int64
+	startTime  time.Time
+	stepPerRow time.Duration
+	lastRow    *rrd.RraRow
+	lastError  error
+}
+
+func (i *rrdRawRowIterator) seekStart() {
+	i.lastError = i.dataFile.Seek(i.rraStart + (i.rraPtr+1)*i.colCount*i.dataFile.ValueSize())
 }
 
 func (i *rrdRawRowIterator) Next() bool {
-	i.row++
-	return i.row >= 0 && uint64(i.row) < i.rowCount
+	if i.lastError == nil && i.lastRow == nil {
+		i.seekStart()
+		i.lastRow = &rrd.RraRow{
+			Values: make([]float64, i.colCount),
+		}
+	} else {
+		i.row++
+		if i.row+i.rraPtr+1 == i.rowCount {
+			i.lastError = i.dataFile.Seek(i.rraStart)
+		}
+	}
+
+	if i.lastError == nil {
+		i.lastRow.Timestamp = i.startTime.Add(time.Duration(i.row) * i.stepPerRow)
+		i.lastError = i.dataFile.ReadDoubles(i.lastRow.Values)
+	}
+
+	return i.row >= 0 && i.row < i.rowCount
 }
 
 func (i *rrdRawRowIterator) Value() (*rrd.RraRow, error) {
-	if i.row < 0 {
-		return nil, errors.Errorf("RowIterator not initinalized")
-	} else if uint64(i.row) >= i.rowCount {
-		return nil, errors.Errorf("RowIterator exhausted")
+	if i.lastError != nil {
+		return nil, i.lastError
 	}
-	if i.row == 0 {
-		if err := i.dataFile.Seek(i.rraStart + i.rraPtr); err != nil {
-			return nil, err
-		}
-	} else if uint64(i.row)+i.rraPtr >= i.rowCount {
-		if err := i.dataFile.Seek(i.rraStart); err != nil {
-			return nil, err
-		}
-	}
-	now := i.lastUpdate.Add(time.Duration(-i.row*i.pdpStep*i.pdpPerRow) * time.Second)
-
-	return &rrd.RraRow{
-		Timestamp: now,
-	}, nil
+	return i.lastRow, nil
 }

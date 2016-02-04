@@ -3,6 +3,7 @@ package cdata
 import (
 	"bytes"
 	"encoding/binary"
+	"math"
 	"os"
 
 	"github.com/go-errors/errors"
@@ -83,6 +84,21 @@ func (f *CDataFile) ReadDouble() (float64, error) {
 		return 0, err
 	}
 	return unival.AsDouble(), nil
+}
+
+func (f *CDataFile) ReadDoubles(buffer []float64) error {
+	if err := f.alignOffset(); err != nil {
+		return err
+	}
+	data, err := f.ReadBytes(8 * len(buffer))
+	if err != nil {
+		return err
+	}
+	for i := range buffer {
+		buffer[i] = math.Float64frombits(f.byteOrder.Uint64(data[i*8 : (i+1)*8]))
+	}
+
+	return nil
 }
 
 func (f *CDataFile) ReadUnsignedLong() (uint64, error) {
