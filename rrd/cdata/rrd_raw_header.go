@@ -12,45 +12,46 @@ type rrdRawHeader struct {
 	pdpStep         uint64
 }
 
-func readRawHeader(dataFile *CDataFile) (*rrdRawHeader, error) {
-	if cookie, err := dataFile.ReadCString(4); err != nil {
-		return nil, err
+func (f *RrdRawFile) readRawHeader() error {
+	if cookie, err := f.dataFile.ReadCString(4); err != nil {
+		return err
 	} else if cookie != rrdCookie {
-		return nil, errors.Errorf("Invalid cookie: %+v", cookie)
+		return errors.Errorf("Invalid cookie: %+v", cookie)
 	}
 
-	if versionStr, err := dataFile.ReadCString(5); err != nil {
-		return nil, err
+	if versionStr, err := f.dataFile.ReadCString(5); err != nil {
+		return err
 	} else if version, err := strconv.ParseInt(string(versionStr[:4]), 10, 8); err != nil {
-		return nil, errors.Errorf("Invalid version: %+v", version)
+		return errors.Errorf("Invalid version: %+v", version)
 	} else if version < 3 {
-		return nil, errors.Errorf("Version %d not supported: ", version)
+		return errors.Errorf("Version %d not supported: ", version)
 	}
-	if floatCookie, err := dataFile.ReadDouble(); err != nil {
-		return nil, err
+	if floatCookie, err := f.dataFile.ReadDouble(); err != nil {
+		return err
 	} else if floatCookie != rrdFloatCookie {
-		return nil, errors.Errorf("Float cookie does not match: %+v != %+v", floatCookie, rrdFloatCookie)
+		return errors.Errorf("Float cookie does not match: %+v != %+v", floatCookie, rrdFloatCookie)
 	}
 
-	datasourceCount, err := dataFile.ReadUnsignedLong()
+	datasourceCount, err := f.dataFile.ReadUnsignedLong()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	rraCount, err := dataFile.ReadUnsignedLong()
+	rraCount, err := f.dataFile.ReadUnsignedLong()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	pdpStep, err := dataFile.ReadUnsignedLong()
+	pdpStep, err := f.dataFile.ReadUnsignedLong()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if _, err = dataFile.ReadUnivals(10); err != nil {
-		return nil, err
+	if _, err = f.dataFile.ReadUnivals(10); err != nil {
+		return err
 	}
 
-	return &rrdRawHeader{
+	f.header = &rrdRawHeader{
 		datasourceCount: datasourceCount,
 		rraCount:        rraCount,
 		pdpStep:         pdpStep,
-	}, nil
+	}
+	return nil
 }

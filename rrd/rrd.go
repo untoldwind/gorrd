@@ -38,7 +38,7 @@ func (r *Rrd) DumpTo(dumper RrdDumper) error {
 		if err != nil {
 			return err
 		}
-		if err := rra.DumpTo(subDumper); err != nil {
+		if err := rra.DumpTo(r.Store, subDumper); err != nil {
 			return err
 		}
 	}

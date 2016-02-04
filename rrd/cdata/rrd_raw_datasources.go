@@ -5,12 +5,12 @@ import (
 	"github.com/untoldwind/gorrd/rrd"
 )
 
-func readDatasources(header *rrdRawHeader, dataFile *CDataFile) ([]rrd.RrdDatasource, error) {
-	result := make([]rrd.RrdDatasource, header.datasourceCount)
+func (f *RrdRawFile) readDatasources() ([]rrd.RrdDatasource, error) {
+	result := make([]rrd.RrdDatasource, f.header.datasourceCount)
 
 	var err error
 	for i := range result {
-		result[i], err = readDatasource(dataFile)
+		result[i], err = readDatasource(f.dataFile)
 		if err != nil {
 			return nil, err
 		}
@@ -35,11 +35,11 @@ func readDatasource(dataFile *CDataFile) (rrd.RrdDatasource, error) {
 	switch datasourceType {
 	case rrd.RrdDatasourceTypeAbsolute:
 		return &rrd.RrdDatasourceAbsolute{
-			rrd.RrdDatasourceAbstractLong{
+			rrd.RrdDatasourceAbstract{
 				Name:      name,
 				Heartbeat: parameters[0].AsUnsignedLong(),
-				Min:       parameters[1].AsUnsignedLong(),
-				Max:       parameters[2].AsUnsignedLong(),
+				Min:       parameters[1].AsDouble(),
+				Max:       parameters[2].AsDouble(),
 			},
 		}, nil
 	case rrd.RrdDatasourceTypeCounter:
@@ -71,11 +71,11 @@ func readDatasource(dataFile *CDataFile) (rrd.RrdDatasource, error) {
 		}, nil
 	case rrd.RrdDatasourceTypeDerive:
 		return &rrd.RrdDeriveDatasource{
-			rrd.RrdDatasourceAbstractLong{
+			rrd.RrdDatasourceAbstract{
 				Name:      name,
 				Heartbeat: parameters[0].AsUnsignedLong(),
-				Min:       parameters[1].AsUnsignedLong(),
-				Max:       parameters[2].AsUnsignedLong(),
+				Min:       parameters[1].AsDouble(),
+				Max:       parameters[2].AsDouble(),
 			},
 		}, nil
 	case rrd.RrdDatasourceTypeGauge:

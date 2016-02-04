@@ -15,10 +15,11 @@ type CDataFile struct {
 	position      uint64
 	byteOrder     binary.ByteOrder
 	byteAlignment uint64
+	valueSize     uint64
 }
 
 // Open a CDataFile
-func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteAlignment uint64) (*CDataFile, error) {
+func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteAlignment, valueSize uint64) (*CDataFile, error) {
 	flag := os.O_RDWR
 	if readOnly {
 		flag = os.O_RDONLY
@@ -34,6 +35,7 @@ func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteA
 		position:      0,
 		byteOrder:     byteOrder,
 		byteAlignment: byteAlignment,
+		valueSize:     valueSize,
 	}, nil
 }
 
@@ -104,6 +106,15 @@ func (f *CDataFile) ReadUnivals(count int) ([]unival, error) {
 		result[i] = unival(f.byteOrder.Uint64(data[i*8 : (i+1)*8]))
 	}
 	return result, nil
+}
+
+func (f *CDataFile) Seek(offset uint64) error {
+	_, err := f.file.Seek(int64(offset), 0)
+	return err
+}
+
+func (f *CDataFile) ValueSize() uint64 {
+	return f.valueSize
 }
 
 func (f *CDataFile) CurPosition() uint64 {

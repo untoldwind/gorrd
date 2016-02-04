@@ -1,23 +1,13 @@
 package cdata
 
-type RrdRraPtr uint64
-
-func (f *RrdRawFile) readRraPtrs(header *rrdRawHeader) error {
-	f.rraPtrs = make([]RrdRraPtr, header.rraCount)
+func (f *RrdRawFile) readRraPtrs() error {
+	f.rraPtrs = make([]uint64, f.header.rraCount)
 	var err error
 	for i := range f.rraPtrs {
-		f.rraPtrs[i], err = f.readRraPtr()
+		f.rraPtrs[i], err = f.dataFile.ReadUnsignedLong()
 		if err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-func (f *RrdRawFile) readRraPtr() (RrdRraPtr, error) {
-	ptr, err := f.dataFile.ReadUnsignedLong()
-	if err != nil {
-		return 0, nil
-	}
-	return RrdRraPtr(ptr), nil
 }

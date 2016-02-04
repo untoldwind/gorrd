@@ -3,12 +3,12 @@ package rrd
 const RrdDatasourceTypeDerive = "DERIVE"
 
 type RrdDeriveDatasource struct {
-	RrdDatasourceAbstractLong
+	RrdDatasourceAbstract
 }
 
 func (d *RrdDeriveDatasource) DumpTo(dumper RrdDumper) error {
 	if err := dumper.DumpString("type", RrdDatasourceTypeDerive); err != nil {
 		return err
 	}
-	return d.RrdDatasourceAbstractLong.DumpTo(dumper)
+	return d.RrdDatasourceAbstract.DumpTo(dumper)
 }

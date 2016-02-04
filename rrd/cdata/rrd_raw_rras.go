@@ -5,12 +5,12 @@ import (
 	"github.com/untoldwind/gorrd/rrd"
 )
 
-func readRras(header *rrdRawHeader, dataFile *CDataFile) ([]rrd.Rra, error) {
-	result := make([]rrd.Rra, header.rraCount)
+func (f *RrdRawFile) readRras() ([]rrd.Rra, error) {
+	result := make([]rrd.Rra, f.header.rraCount)
 
 	var err error
 	for i := range result {
-		result[i], err = readRra(dataFile)
+		result[i], err = readRra(f.dataFile)
 		if err != nil {
 			return nil, err
 		}
@@ -27,7 +27,7 @@ func readRra(dataFile *CDataFile) (rrd.Rra, error) {
 	if err != nil {
 		return nil, err
 	}
-	pdpCount, err := dataFile.ReadUnsignedLong()
+	pdpPerRow, err := dataFile.ReadUnsignedLong()
 	if err != nil {
 		return nil, err
 	}
@@ -39,9 +39,11 @@ func readRra(dataFile *CDataFile) (rrd.Rra, error) {
 	switch rraType {
 	case rrd.RraTypeAverage:
 		return &rrd.RraAverage{
-			RowCount:     rowCount,
-			PdpCount:     pdpCount,
-			XFilesFactor: parameters[0].AsDouble(),
+			rrd.RraAbstractGeneric{
+				RowCount:     rowCount,
+				PdpPerRow:    pdpPerRow,
+				XFilesFactor: parameters[0].AsDouble(),
+			},
 		}, nil
 	}
 

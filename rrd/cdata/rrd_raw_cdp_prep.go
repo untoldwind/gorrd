@@ -4,8 +4,8 @@ type RrdCdpPrep struct {
 	scratch []unival
 }
 
-func (f *RrdRawFile) readCdpPreps(header *rrdRawHeader) error {
-	f.cdpPreps = make([]*RrdCdpPrep, header.rraCount*header.datasourceCount)
+func (f *RrdRawFile) readCdpPreps() error {
+	f.cdpPreps = make([]*RrdCdpPrep, f.header.rraCount*f.header.datasourceCount)
 
 	var err error
 	for i := range f.cdpPreps {
