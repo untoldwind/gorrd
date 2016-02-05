@@ -45,7 +45,7 @@ func OpenRrdRawFile(name string, readOnly bool) (*rrd.Rrd, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := rrdFile.read(); err != nil {
+	if err := rrdFile.read(datasources); err != nil {
 		dataFile.Close()
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (f *RrdRawFile) Close() {
 	f.dataFile.Close()
 }
 
-func (f *RrdRawFile) read() error {
+func (f *RrdRawFile) read(datasources []rrd.RrdDatasource) error {
 	if err := f.readLiveHead(); err != nil {
 		return err
 	}
@@ -79,6 +79,9 @@ func (f *RrdRawFile) read() error {
 	}
 	if err := f.readRraPtrs(); err != nil {
 		return err
+	}
+	for i, datasource := range datasources {
+		datasource.SetLastValue(f.pdpPreps[i].lastDatasourceValue)
 	}
 
 	return nil

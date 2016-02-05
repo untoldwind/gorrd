@@ -2,11 +2,14 @@ package rrd
 
 type RrdDatasource interface {
 	GetName() string
+	SetLastValue(lastValue string)
+	GetLastValue() string
 	DumpTo(dumper RrdDumper) error
 }
 
 type RrdDatasourceAbstract struct {
 	Name      string
+	LastValue string
 	Heartbeat uint64
 	Min       float64
 	Max       float64
@@ -14,6 +17,13 @@ type RrdDatasourceAbstract struct {
 
 func (d *RrdDatasourceAbstract) GetName() string {
 	return d.Name
+}
+
+func (d *RrdDatasourceAbstract) SetLastValue(lastValue string) {
+	d.LastValue = lastValue
+}
+func (d *RrdDatasourceAbstract) GetLastValue() string {
+	return d.LastValue
 }
 
 func (d *RrdDatasourceAbstract) DumpTo(dumper RrdDumper) error {

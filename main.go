@@ -19,6 +19,7 @@ func main() {
 		commands.CreateCommand,
 		commands.UpdateCommand,
 		commands.DumpCommand,
+		commands.LastUpdateCommand,
 	}
 
 	if err := app.Run(os.Args); err != nil {
