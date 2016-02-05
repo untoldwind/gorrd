@@ -17,17 +17,13 @@ var LastUpdateCommand = cli.Command{
 }
 
 func lastUpdate(ctx *cli.Context) {
-	args := ctx.Args()
-
-	if !args.Present() {
-		fmt.Fprintln(ctx.App.Writer, "Filename required")
-		fmt.Fprintln(ctx.App.Writer)
-
-		cli.ShowCommandHelp(ctx, "lastupdate")
+	filename, err := getFilenameArg(ctx)
+	if err != nil {
+		showError(ctx, err)
 		return
 	}
 
-	rrd, err := cdata.OpenRrdRawFile(args.First(), true)
+	rrd, err := cdata.OpenRrdRawFile(filename, true)
 	if err != nil {
 		fmt.Fprintln(ctx.App.Writer, err)
 		return
