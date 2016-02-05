@@ -11,19 +11,17 @@ type RraRow struct {
 }
 
 func (r *RraRow) DumpTo(dumper RrdDumper) error {
-	row, err := dumper.DumpSubFields("row")
-	if err != nil {
-		return err
-	}
-	if err := dumper.DumpComment(fmt.Sprintf("%s / %d", r.Timestamp.String(), r.Timestamp.Unix())); err != nil {
-		return err
-	}
-	for _, value := range r.Values {
-		if err := dumper.DumpDouble("v", value); err != nil {
+	return dumper.DumpSubFields("row", func(row RrdDumper) error {
+		if err := dumper.DumpComment(fmt.Sprintf("%s / %d", r.Timestamp.String(), r.Timestamp.Unix())); err != nil {
 			return err
 		}
-	}
-	return row.Finalize()
+		for _, value := range r.Values {
+			if err := dumper.DumpDouble("v", value); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 type RraRowIterator interface {

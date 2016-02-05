@@ -30,32 +30,18 @@ func (r *RraAbstractGeneric) DumpTo(rrdStore RrdStore, dumper RrdDumper) error {
 	if err := dumper.DumpUnsignedLong("pdp_per_row", r.PdpPerRow); err != nil {
 		return err
 	}
-	if params, err := dumper.DumpSubFields("params"); err != nil {
+	if err := dumper.DumpSubFields("params", func(params RrdDumper) error {
+		return params.DumpDouble("xff", r.XFilesFactor)
+	}); err != nil {
 		return err
-	} else {
-		if err := params.DumpDouble("xff", r.XFilesFactor); err != nil {
-			return err
-		}
-		if err := params.Finalize(); err != nil {
-			return err
-		}
 	}
-	if database, err := dumper.DumpSubFields("database"); err != nil {
-		return err
-	} else {
+	return dumper.DumpSubFields("database", func(database RrdDumper) error {
 		rowIterator, err := rrdStore.RowIterator(r)
 		if err != nil {
 			return err
 		}
-		if err := ForEachRow(rowIterator, func(row *RraRow) error {
+		return ForEachRow(rowIterator, func(row *RraRow) error {
 			return row.DumpTo(dumper)
-		}); err != nil {
-			return err
-		}
-
-		if err := database.Finalize(); err != nil {
-			return err
-		}
-	}
-	return dumper.Finalize()
+		})
+	})
 }

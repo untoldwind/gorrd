@@ -26,8 +26,5 @@ func (d *RrdDatasourceAbstract) DumpTo(dumper RrdDumper) error {
 	if err := dumper.DumpDouble("min", d.Min); err != nil {
 		return err
 	}
-	if err := dumper.DumpDouble("max", d.Max); err != nil {
-		return err
-	}
-	return dumper.Finalize()
+	return dumper.DumpDouble("max", d.Max)
 }

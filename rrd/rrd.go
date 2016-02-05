@@ -25,20 +25,16 @@ func (r *Rrd) DumpTo(dumper RrdDumper) error {
 		return err
 	}
 	for _, datasource := range r.Datasources {
-		subDumper, err := dumper.DumpSubFields("ds")
-		if err != nil {
-			return err
-		}
-		if err := datasource.DumpTo(subDumper); err != nil {
+		if err := dumper.DumpSubFields("ds", func(sub RrdDumper) error {
+			return datasource.DumpTo(sub)
+		}); err != nil {
 			return err
 		}
 	}
 	for _, rra := range r.Rras {
-		subDumper, err := dumper.DumpSubFields("rra")
-		if err != nil {
-			return err
-		}
-		if err := rra.DumpTo(r.Store, subDumper); err != nil {
+		if err := dumper.DumpSubFields("rra", func(sub RrdDumper) error {
+			return rra.DumpTo(r.Store, sub)
+		}); err != nil {
 			return err
 		}
 	}

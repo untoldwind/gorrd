@@ -84,15 +84,18 @@ func (d *XmlDumber) DumpTime(field string, value time.Time) error {
 	})
 }
 
-func (d *XmlDumber) DumpSubFields(field string) (rrd.RrdDumper, error) {
+func (d *XmlDumber) DumpSubFields(field string, subDump func(rrd.RrdDumper) error) error {
 	dumper := &XmlDumber{
 		encoder: d.encoder,
 		tag:     field,
 	}
 	if err := d.encoder.EncodeToken(xml.StartElement{Name: xml.Name{Local: field}}); err != nil {
-		return nil, err
+		return err
 	}
-	return dumper, nil
+	if err := subDump(dumper); err != nil {
+		return err
+	}
+	return dumper.Finalize()
 }
 
 func (d *XmlDumber) Finalize() error {
