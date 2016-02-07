@@ -50,3 +50,7 @@ func (i *rrdRawRowIterator) Value() (*rrd.RraRow, error) {
 	}
 	return i.lastRow, nil
 }
+
+func (i *rrdRawRowIterator) Close() {
+
+}

@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"math"
 	"os"
+	"sync"
 
 	"github.com/go-errors/errors"
 )
@@ -12,6 +13,7 @@ import (
 // CDataFile Helper to access files created from C code by directly mapping structs
 // Honours byte order as well as byte alignment
 type CDataFile struct {
+	lock          sync.Mutex
 	file          *os.File
 	position      uint64
 	byteOrder     binary.ByteOrder
@@ -38,6 +40,14 @@ func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteA
 		byteAlignment: byteAlignment,
 		valueSize:     valueSize,
 	}, nil
+}
+
+func (f *CDataFile) Lock() {
+	f.lock.Lock()
+}
+
+func (f *CDataFile) Unlock() {
+	f.lock.Unlock()
 }
 
 // Close the CDataFile

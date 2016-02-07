@@ -15,8 +15,7 @@ func getFilenameArg(ctx *cli.Context) (string, error) {
 }
 
 func showError(ctx *cli.Context, err error) {
-	fmt.Fprintln(ctx.App.Writer, err.Error())
-	fmt.Fprintln(ctx.App.Writer)
+	fmt.Fprintf(ctx.App.Writer, "ERROR: %s\n\n", err.Error())
 
 	cli.ShowCommandHelp(ctx, ctx.Command.Name)
 }

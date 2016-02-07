@@ -1,12 +1,12 @@
 package cdata
 
-type RrdPdpPrep struct {
+type rrdPdpPrep struct {
 	lastDatasourceValue string
 	scratch             []unival
 }
 
 func (f *RrdRawFile) readPdpPreps() error {
-	f.pdpPreps = make([]*RrdPdpPrep, f.header.datasourceCount)
+	f.pdpPreps = make([]*rrdPdpPrep, f.header.datasourceCount)
 
 	var err error
 	for i := range f.pdpPreps {
@@ -18,7 +18,7 @@ func (f *RrdRawFile) readPdpPreps() error {
 	return nil
 }
 
-func (f *RrdRawFile) readPdpPrep() (*RrdPdpPrep, error) {
+func (f *RrdRawFile) readPdpPrep() (*rrdPdpPrep, error) {
 	value, err := f.dataFile.ReadCString(30)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func (f *RrdRawFile) readPdpPrep() (*RrdPdpPrep, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &RrdPdpPrep{
+	return &rrdPdpPrep{
 		lastDatasourceValue: value,
 		scratch:             scratch,
 	}, nil

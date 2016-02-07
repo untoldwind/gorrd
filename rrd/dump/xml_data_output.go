@@ -9,13 +9,13 @@ import (
 	"github.com/untoldwind/gorrd/rrd"
 )
 
-type XmlDumber struct {
+type XmlDataOutput struct {
 	encoder *xml.Encoder
 	tag     string
 }
 
-func NewXmlDumper(output io.Writer, prettyPrint bool) (*XmlDumber, error) {
-	dumper := &XmlDumber{
+func NewXmlDumper(output io.Writer, prettyPrint bool) (*XmlDataOutput, error) {
+	dumper := &XmlDataOutput{
 		encoder: xml.NewEncoder(output),
 		tag:     "rrd",
 	}
@@ -30,7 +30,7 @@ func NewXmlDumper(output io.Writer, prettyPrint bool) (*XmlDumber, error) {
 	return dumper, nil
 }
 
-func (d *XmlDumber) writeTokens(tokens []xml.Token) error {
+func (d *XmlDataOutput) writeTokens(tokens []xml.Token) error {
 	for _, token := range tokens {
 		if err := d.encoder.EncodeToken(token); err != nil {
 			return err
@@ -38,7 +38,7 @@ func (d *XmlDumber) writeTokens(tokens []xml.Token) error {
 	}
 	return nil
 }
-func (d *XmlDumber) writeHeader() error {
+func (d *XmlDataOutput) writeHeader() error {
 	return d.writeTokens([]xml.Token{
 		xml.ProcInst{Target: "xml", Inst: []byte(`version="1.0" encoding="utf-8"`)},
 		xml.Directive(`DOCTYPE rrd SYSTEM "http://oss.oetiker.ch/rrdtool/rrdtool.dtd"`),
@@ -47,11 +47,11 @@ func (d *XmlDumber) writeHeader() error {
 	})
 }
 
-func (d *XmlDumber) DumpComment(comment string) error {
+func (d *XmlDataOutput) DumpComment(comment string) error {
 	return d.encoder.EncodeToken(xml.Comment(comment))
 }
 
-func (d *XmlDumber) DumpString(field, value string) error {
+func (d *XmlDataOutput) DumpString(field, value string) error {
 	return d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(value),
@@ -59,7 +59,7 @@ func (d *XmlDumber) DumpString(field, value string) error {
 	})
 }
 
-func (d *XmlDumber) DumpDouble(field string, value float64) error {
+func (d *XmlDataOutput) DumpDouble(field string, value float64) error {
 	return d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(strconv.FormatFloat(value, 'e', 10, 64)),
@@ -67,7 +67,7 @@ func (d *XmlDumber) DumpDouble(field string, value float64) error {
 	})
 }
 
-func (d *XmlDumber) DumpUnsignedLong(field string, value uint64) error {
+func (d *XmlDataOutput) DumpUnsignedLong(field string, value uint64) error {
 	return d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(strconv.FormatUint(value, 10)),
@@ -75,7 +75,7 @@ func (d *XmlDumber) DumpUnsignedLong(field string, value uint64) error {
 	})
 }
 
-func (d *XmlDumber) DumpTime(field string, value time.Time) error {
+func (d *XmlDataOutput) DumpTime(field string, value time.Time) error {
 	return d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(strconv.FormatInt(value.Unix(), 10)),
@@ -84,8 +84,8 @@ func (d *XmlDumber) DumpTime(field string, value time.Time) error {
 	})
 }
 
-func (d *XmlDumber) DumpSubFields(field string, subDump func(rrd.RrdDumper) error) error {
-	dumper := &XmlDumber{
+func (d *XmlDataOutput) DumpSubFields(field string, subDump func(rrd.DataDumper) error) error {
+	dumper := &XmlDataOutput{
 		encoder: d.encoder,
 		tag:     field,
 	}
@@ -98,7 +98,7 @@ func (d *XmlDumber) DumpSubFields(field string, subDump func(rrd.RrdDumper) erro
 	return dumper.Finalize()
 }
 
-func (d *XmlDumber) Finalize() error {
+func (d *XmlDataOutput) Finalize() error {
 	if err := d.encoder.EncodeToken(xml.EndElement{Name: xml.Name{Local: d.tag}}); err != nil {
 		return err
 	}

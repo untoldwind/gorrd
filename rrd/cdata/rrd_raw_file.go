@@ -16,10 +16,13 @@ type RrdRawFile struct {
 	header     *rrdRawHeader
 	lastUpdate time.Time
 
+	datasourceDefs []*rrdRawDatasourceDef
+	rraDefs        []*rrdRawRraDef
+
 	headerSize uint64
 
-	pdpPreps []*RrdPdpPrep
-	cdpPreps []*RrdCdpPrep
+	pdpPreps []*rrdPdpPrep
+	cdpPreps [][]*rrdCdpPrep
 
 	rraPtrs   []uint64
 	rraStarts []uint64
@@ -34,40 +37,45 @@ func OpenRrdRawFile(name string, readOnly bool) (*rrd.Rrd, error) {
 	rrdFile := &RrdRawFile{
 		dataFile: dataFile,
 	}
-	if err := rrdFile.readRawHeader(); err != nil {
-		return nil, err
-	}
-	datasources, err := rrdFile.readDatasources()
-	if err != nil {
-		return nil, err
-	}
-	rras, err := rrdFile.readRras()
-	if err != nil {
-		return nil, err
-	}
-	if err := rrdFile.read(datasources); err != nil {
+	if err := rrdFile.readHeaders(); err != nil {
 		dataFile.Close()
 		return nil, err
 	}
 
 	rrdFile.headerSize = dataFile.CurPosition()
 
-	rrdFile.calculateRraStarts(rras)
+	rrdFile.calculateRraStarts()
 
-	return &rrd.Rrd{
-		Store:       rrdFile,
-		Step:        rrdFile.header.pdpStep,
-		LastUpdate:  rrdFile.lastUpdate,
-		Datasources: datasources,
-		Rras:        rras,
-	}, nil
+	rrd, err := rrd.NewRrd(rrdFile)
+	if err != nil {
+		return nil, err
+	}
+
+	return rrd, nil
+}
+
+func (f *RrdRawFile) LastUpdate() time.Time {
+	return f.lastUpdate
+}
+
+func (f *RrdRawFile) Step() uint64 {
+	return f.header.pdpStep
 }
 
 func (f *RrdRawFile) Close() {
 	f.dataFile.Close()
 }
 
-func (f *RrdRawFile) read(datasources []rrd.RrdDatasource) error {
+func (f *RrdRawFile) readHeaders() error {
+	if err := f.readVersionHeader(); err != nil {
+		return err
+	}
+	if err := f.readDatasources(); err != nil {
+		return err
+	}
+	if err := f.readRras(); err != nil {
+		return err
+	}
 	if err := f.readLiveHead(); err != nil {
 		return err
 	}
@@ -80,19 +88,16 @@ func (f *RrdRawFile) read(datasources []rrd.RrdDatasource) error {
 	if err := f.readRraPtrs(); err != nil {
 		return err
 	}
-	for i, datasource := range datasources {
-		datasource.SetLastValue(f.pdpPreps[i].lastDatasourceValue)
-	}
 
 	return nil
 }
 
-func (f *RrdRawFile) calculateRraStarts(rras []rrd.Rra) {
+func (f *RrdRawFile) calculateRraStarts() {
 	f.rraStarts = make([]uint64, f.header.rraCount)
 	rraNextStart := f.headerSize
-	for i, rra := range rras {
+	for i, rraDef := range f.rraDefs {
 		f.rraStarts[i] = rraNextStart
-		rraNextStart += f.header.datasourceCount * rra.GetRowCount() * f.dataFile.ValueSize()
+		rraNextStart += f.header.datasourceCount * rraDef.pdpPerRow * f.dataFile.ValueSize()
 	}
 }
 
