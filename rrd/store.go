@@ -8,7 +8,7 @@ type Store interface {
 	RraTypes() []string
 	ReadRraParams(index int, params interface{}) error
 	LastUpdate() time.Time
-	Step() uint64
-	RowIterator(rra Rra) (RraRowIterator, error)
+	Step() time.Duration
+	RowIterator(rraIndex int) (RraRowIterator, error)
 	Close()
 }

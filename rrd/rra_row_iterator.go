@@ -10,8 +10,8 @@ type RraRow struct {
 	Values    []float64
 }
 
-func (r *RraRow) DumpTo(dumper DataDumper) error {
-	return dumper.DumpSubFields("row", func(row DataDumper) error {
+func (r *RraRow) DumpTo(dumper DataOutput) error {
+	return dumper.DumpSubFields("row", func(row DataOutput) error {
 		if err := dumper.DumpComment(fmt.Sprintf("%s / %d", r.Timestamp.String(), r.Timestamp.Unix())); err != nil {
 			return err
 		}

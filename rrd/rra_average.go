@@ -6,7 +6,7 @@ type RraAverage struct {
 	RraAbstractGeneric
 }
 
-func (r *RraAverage) DumpTo(rrdStore Store, dumper DataDumper) error {
+func (r *RraAverage) DumpTo(rrdStore Store, dumper DataOutput) error {
 	if err := dumper.DumpString("cf", RraTypeAverage); err != nil {
 		return err
 	}

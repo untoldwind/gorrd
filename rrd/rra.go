@@ -1,10 +1,9 @@
 package rrd
 
 type Rra interface {
-	GetIndex() int
 	GetRowCount() uint64
 	GetPdpPerRow() uint64
-	DumpTo(rrdStore Store, dumper DataDumper) error
+	DumpTo(rrdStore Store, dumper DataOutput) error
 }
 
 type RraCpdPrepGeneric struct {
@@ -14,8 +13,8 @@ type RraCpdPrepGeneric struct {
 	UnknownDatapoints uint64  `cdp:"1"`
 }
 
-func (c *RraCpdPrepGeneric) DumpTo(dumper DataDumper) error {
-	return dumper.DumpSubFields("ds", func(ds DataDumper) error {
+func (c *RraCpdPrepGeneric) DumpTo(dumper DataOutput) error {
+	return dumper.DumpSubFields("ds", func(ds DataOutput) error {
 		if err := ds.DumpDouble("primary_value", c.PrimaryValue); err != nil {
 			return err
 		}
@@ -40,10 +39,6 @@ type RraAbstractGeneric struct {
 	CpdPreps     []RraCpdPrepGeneric `rra:"cpdPreps"`
 }
 
-func (r *RraAbstractGeneric) GetIndex() int {
-	return r.Index
-}
-
 func (r *RraAbstractGeneric) GetRowCount() uint64 {
 	return r.RowCount
 }
@@ -52,16 +47,16 @@ func (r *RraAbstractGeneric) GetPdpPerRow() uint64 {
 	return r.PdpPerRow
 }
 
-func (r *RraAbstractGeneric) DumpTo(rrdStore Store, dumper DataDumper) error {
+func (r *RraAbstractGeneric) DumpTo(rrdStore Store, dumper DataOutput) error {
 	if err := dumper.DumpUnsignedLong("pdp_per_row", r.PdpPerRow); err != nil {
 		return err
 	}
-	if err := dumper.DumpSubFields("params", func(params DataDumper) error {
+	if err := dumper.DumpSubFields("params", func(params DataOutput) error {
 		return params.DumpDouble("xff", r.XFilesFactor)
 	}); err != nil {
 		return err
 	}
-	if err := dumper.DumpSubFields("cdp_prep", func(cdpPreps DataDumper) error {
+	if err := dumper.DumpSubFields("cdp_prep", func(cdpPreps DataOutput) error {
 		for _, cdpPrep := range r.CpdPreps {
 			if err := cdpPrep.DumpTo(cdpPreps); err != nil {
 				return err
@@ -71,8 +66,8 @@ func (r *RraAbstractGeneric) DumpTo(rrdStore Store, dumper DataDumper) error {
 	}); err != nil {
 		return err
 	}
-	return dumper.DumpSubFields("database", func(database DataDumper) error {
-		rowIterator, err := rrdStore.RowIterator(r)
+	return dumper.DumpSubFields("database", func(database DataOutput) error {
+		rowIterator, err := rrdStore.RowIterator(r.Index)
 		if err != nil {
 			return err
 		}

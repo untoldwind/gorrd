@@ -4,9 +4,9 @@ import "github.com/go-errors/errors"
 
 type Datasource interface {
 	GetName() string
-	SetLastValue(lastValue string)
 	GetLastValue() string
-	DumpTo(dumper DataDumper) error
+	UpdatePdpPrep(newValue string, interval float64) (float64, error)
+	DumpTo(dumper DataOutput) error
 }
 
 type DatasourceAbstract struct {
@@ -26,11 +26,12 @@ func (d *DatasourceAbstract) GetName() string {
 func (d *DatasourceAbstract) SetLastValue(lastValue string) {
 	d.LastValue = lastValue
 }
+
 func (d *DatasourceAbstract) GetLastValue() string {
 	return d.LastValue
 }
 
-func (d *DatasourceAbstract) DumpTo(dumper DataDumper) error {
+func (d *DatasourceAbstract) DumpTo(dumper DataOutput) error {
 	if err := dumper.DumpString("name", d.Name); err != nil {
 		return err
 	}

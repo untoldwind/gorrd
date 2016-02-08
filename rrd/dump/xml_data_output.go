@@ -14,7 +14,7 @@ type XmlDataOutput struct {
 	tag     string
 }
 
-func NewXmlDumper(output io.Writer, prettyPrint bool) (*XmlDataOutput, error) {
+func NewXmlOutput(output io.Writer, prettyPrint bool) (*XmlDataOutput, error) {
 	dumper := &XmlDataOutput{
 		encoder: xml.NewEncoder(output),
 		tag:     "rrd",
@@ -84,7 +84,16 @@ func (d *XmlDataOutput) DumpTime(field string, value time.Time) error {
 	})
 }
 
-func (d *XmlDataOutput) DumpSubFields(field string, subDump func(rrd.DataDumper) error) error {
+func (d *XmlDataOutput) DumpDuration(field string, value time.Duration) error {
+	return d.writeTokens([]xml.Token{
+		xml.StartElement{Name: xml.Name{Local: field}},
+		xml.CharData(strconv.FormatInt(int64(value.Seconds()), 10)),
+		xml.EndElement{Name: xml.Name{Local: field}},
+		xml.Comment(value.String()),
+	})
+}
+
+func (d *XmlDataOutput) DumpSubFields(field string, subDump func(rrd.DataOutput) error) error {
 	dumper := &XmlDataOutput{
 		encoder: d.encoder,
 		tag:     field,

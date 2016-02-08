@@ -58,8 +58,8 @@ func (f *RrdRawFile) LastUpdate() time.Time {
 	return f.lastUpdate
 }
 
-func (f *RrdRawFile) Step() uint64 {
-	return f.header.pdpStep
+func (f *RrdRawFile) Step() time.Duration {
+	return time.Duration(f.header.pdpStep) * time.Second
 }
 
 func (f *RrdRawFile) Close() {
@@ -101,16 +101,16 @@ func (f *RrdRawFile) calculateRraStarts() {
 	}
 }
 
-func (f *RrdRawFile) RowIterator(rra rrd.Rra) (rrd.RraRowIterator, error) {
-	stepPerRow := time.Duration(f.header.pdpStep*rra.GetPdpPerRow()) * time.Second
-	startTime := f.lastUpdate.Truncate(stepPerRow).Add(-time.Duration(rra.GetRowCount()-1) * stepPerRow)
+func (f *RrdRawFile) RowIterator(rraIndex int) (rrd.RraRowIterator, error) {
+	stepPerRow := time.Duration(f.header.pdpStep*f.rraDefs[rraIndex].pdpPerRow) * time.Second
+	startTime := f.lastUpdate.Truncate(stepPerRow).Add(-time.Duration(f.rraDefs[rraIndex].rowCount-1) * stepPerRow)
 	iterator := &rrdRawRowIterator{
 		dataFile:   f.dataFile,
 		row:        0,
-		rowCount:   rra.GetRowCount(),
+		rowCount:   f.rraDefs[rraIndex].rowCount,
 		colCount:   f.header.datasourceCount,
-		rraStart:   f.rraStarts[rra.GetIndex()],
-		rraPtr:     f.rraPtrs[rra.GetIndex()],
+		rraStart:   f.rraStarts[rraIndex],
+		rraPtr:     f.rraPtrs[rraIndex],
 		startTime:  startTime,
 		stepPerRow: stepPerRow,
 	}

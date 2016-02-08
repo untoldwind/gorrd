@@ -1,25 +1,28 @@
 package rrd
 
+import "math"
+
 const DatasourceTypeCompute = "COMPUTE"
 
-type ComputeDatasource struct {
+type DatasourceCompute struct {
 	Name      string
 	LastValue string
 }
 
-func (d *ComputeDatasource) GetName() string {
+func (d *DatasourceCompute) GetName() string {
 	return d.Name
 }
 
-func (d *ComputeDatasource) SetLastValue(lastValue string) {
-	d.LastValue = lastValue
-}
-
-func (d *ComputeDatasource) GetLastValue() string {
+func (d *DatasourceCompute) GetLastValue() string {
 	return d.LastValue
 }
 
-func (d *ComputeDatasource) DumpTo(dumper DataDumper) error {
+func (d *DatasourceCompute) UpdatePdpPrep(newValue string, interval float64) (float64, error) {
+	// Compute datasource are never updated
+	return math.NaN(), nil
+}
+
+func (d *DatasourceCompute) DumpTo(dumper DataOutput) error {
 	if err := dumper.DumpString("name", d.Name); err != nil {
 		return err
 	}
