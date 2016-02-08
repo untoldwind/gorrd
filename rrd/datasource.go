@@ -1,6 +1,10 @@
 package rrd
 
-import "github.com/go-errors/errors"
+import (
+	"math"
+
+	"github.com/go-errors/errors"
+)
 
 type Datasource interface {
 	GetName() string
@@ -54,6 +58,12 @@ func (d *DatasourceAbstract) DumpTo(dumper DataOutput) error {
 		return err
 	}
 	return nil
+}
+
+func (d *DatasourceAbstract) checkRateBounds(rate float64) bool {
+	return !math.IsNaN(rate) &&
+		(math.IsNaN(d.Min) || rate >= d.Min) &&
+		(math.IsNaN(d.Max) || rate <= d.Max)
 }
 
 func newDatasource(index int, datasourceType string, store Store) (Datasource, error) {

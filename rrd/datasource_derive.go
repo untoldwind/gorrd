@@ -1,7 +1,9 @@
 package rrd
 
 import (
+	"fmt"
 	"math"
+	"math/big"
 
 	"github.com/go-errors/errors"
 )
@@ -15,15 +17,32 @@ type DatasourceDerive struct {
 func (d *DatasourceDerive) UpdatePdpPrep(newValue string, interval float64) (float64, error) {
 	if float64(d.Heartbeat) < interval {
 		d.LastValue = "U"
-		return math.NaN(), nil
 	}
+
+	rate := math.NaN()
 	newPdp := math.NaN()
 	if newValue != "U" && float64(d.Heartbeat) >= interval {
-		if !rrdIsSignedInt(newValue) {
+		newInt := new(big.Int)
+		_, err := fmt.Sscan(newValue, newInt)
+		if err != nil {
 			return math.NaN(), errors.Errorf("not a simple signed integer: %s", newValue)
 		}
 		if d.LastValue != "U" {
+			prevInt := new(big.Int)
+			_, err := fmt.Sscan(d.LastValue, prevInt)
+			if err != nil {
+				return math.NaN(), errors.Wrap(err, 0)
+			}
+			diff := new(big.Int)
+			diff.Sub(newInt, prevInt)
+
+			newPdp = float64(diff.Uint64())
+			rate = newPdp / interval
 		}
+	}
+
+	if !d.checkRateBounds(rate) {
+		newPdp = math.NaN()
 	}
 
 	d.LastValue = newValue

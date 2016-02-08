@@ -1,6 +1,11 @@
 package rrd
 
-import "math"
+import (
+	"math"
+	"strconv"
+
+	"github.com/go-errors/errors"
+)
 
 const DatasourceTypeGauge = "GAUGE"
 
@@ -9,14 +14,21 @@ type DatasourceGauge struct {
 }
 
 func (d *DatasourceGauge) UpdatePdpPrep(newValue string, interval float64) (float64, error) {
-	if newValue == "U" || float64(d.Heartbeat) < interval {
-		d.LastValue = "U"
-		return math.NaN(), nil
+	newval, err := strconv.ParseFloat(newValue, 64)
+	if err != nil {
+		return math.NaN(), errors.Wrap(err, 0)
+	}
+
+	newPdp := newval * interval
+	rate := newval
+
+	if !d.checkRateBounds(rate) {
+		newPdp = math.NaN()
 	}
 
 	d.LastValue = newValue
 
-	return 0, nil
+	return newPdp, nil
 }
 
 func (d *DatasourceGauge) DumpTo(dumper DataOutput) error {
