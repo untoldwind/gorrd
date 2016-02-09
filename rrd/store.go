@@ -4,11 +4,14 @@ import "time"
 
 type Store interface {
 	DatasourceTypes() []string
-	ReadDatasourceParams(index int, params interface{}) error
 	RraTypes() []string
-	ReadRraParams(index int, params interface{}) error
 	LastUpdate() time.Time
 	Step() time.Duration
+
+	ReadDatasourceParams(index int, params interface{}) error
+	ReadRraParams(index int, params interface{}) error
+	StoreLastUpdate(lastUpdate time.Time)
+
 	RowIterator(rraIndex int) (RraRowIterator, error)
 	Close()
 }
