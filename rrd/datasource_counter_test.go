@@ -23,7 +23,7 @@ func TestDatasourceCounter(t *testing.T) {
 			datasource.LastValue = "U"
 
 			Convey("When value is updated within heartbeat", func() {
-				newPdp, err := datasource.UpdatePdpPrep("10000", 100)
+				newPdp, err := datasource.CalculatePdpPrep("10000", 100)
 
 				So(err, ShouldBeNil)
 				So(math.IsNaN(newPdp), ShouldBeTrue)
@@ -31,7 +31,7 @@ func TestDatasourceCounter(t *testing.T) {
 			})
 
 			Convey("When value is updated beyond heartbeat", func() {
-				newPdp, err := datasource.UpdatePdpPrep("10000", 1000)
+				newPdp, err := datasource.CalculatePdpPrep("10000", 1000)
 
 				So(err, ShouldBeNil)
 				So(math.IsNaN(newPdp), ShouldBeTrue)
@@ -43,7 +43,7 @@ func TestDatasourceCounter(t *testing.T) {
 			datasource.LastValue = "123456"
 
 			Convey("When value 234567 is updated within heartbeat", func() {
-				newPdp, err := datasource.UpdatePdpPrep("234567", 100)
+				newPdp, err := datasource.CalculatePdpPrep("234567", 100)
 
 				So(err, ShouldBeNil)
 				So(newPdp, ShouldEqual, 111111)
@@ -51,7 +51,7 @@ func TestDatasourceCounter(t *testing.T) {
 			})
 
 			Convey("When value 234567 is updated beyond heartbeat", func() {
-				newPdp, err := datasource.UpdatePdpPrep("234567", 1000)
+				newPdp, err := datasource.CalculatePdpPrep("234567", 1000)
 
 				So(err, ShouldBeNil)
 				So(math.IsNaN(newPdp), ShouldBeTrue)

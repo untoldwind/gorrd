@@ -9,7 +9,8 @@ import (
 type Datasource interface {
 	GetName() string
 	GetLastValue() string
-	UpdatePdpPrep(newValue string, interval float64) (float64, error)
+	CalculatePdpPrep(newValue string, interval float64) (float64, error)
+	UpdatePdp(pdpValue, interval float64)
 	DumpTo(dumper DataOutput) error
 }
 
@@ -20,7 +21,7 @@ type DatasourceAbstract struct {
 	Max             float64 `ds:"param2"`
 	LastValue       string  `pdp:"lastValue"`
 	UnknownSecCount uint64  `pdp:"0"`
-	Value           float64 `pdp:"1"`
+	PdpValue        float64 `pdp:"1"`
 }
 
 func (d *DatasourceAbstract) GetName() string {
@@ -33,6 +34,16 @@ func (d *DatasourceAbstract) SetLastValue(lastValue string) {
 
 func (d *DatasourceAbstract) GetLastValue() string {
 	return d.LastValue
+}
+
+func (d *DatasourceAbstract) UpdatePdp(pdpValue, interval float64) {
+	if math.IsNaN(pdpValue) {
+		d.UnknownSecCount += uint64(interval)
+	} else if math.IsNaN(d.PdpValue) {
+		d.PdpValue = pdpValue
+	} else {
+		d.PdpValue += pdpValue
+	}
 }
 
 func (d *DatasourceAbstract) DumpTo(dumper DataOutput) error {
@@ -51,7 +62,7 @@ func (d *DatasourceAbstract) DumpTo(dumper DataOutput) error {
 	if err := dumper.DumpString("last_ds", d.LastValue); err != nil {
 		return err
 	}
-	if err := dumper.DumpDouble("value", d.Value); err != nil {
+	if err := dumper.DumpDouble("value", d.PdpValue); err != nil {
 		return err
 	}
 	if err := dumper.DumpUnsignedLong("unknown_sec", d.UnknownSecCount); err != nil {

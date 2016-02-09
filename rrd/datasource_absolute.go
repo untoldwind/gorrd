@@ -13,7 +13,7 @@ type DatasourceAbsolute struct {
 	DatasourceAbstract
 }
 
-func (d *DatasourceAbsolute) UpdatePdpPrep(newValue string, interval float64) (float64, error) {
+func (d *DatasourceAbsolute) CalculatePdpPrep(newValue string, interval float64) (float64, error) {
 	newval, err := strconv.ParseFloat(newValue, 64)
 	if err != nil {
 		return math.NaN(), errors.Wrap(err, 0)

@@ -14,7 +14,7 @@ type DatasourceCounter struct {
 	DatasourceAbstract
 }
 
-func (d *DatasourceCounter) UpdatePdpPrep(newValue string, interval float64) (float64, error) {
+func (d *DatasourceCounter) CalculatePdpPrep(newValue string, interval float64) (float64, error) {
 	if float64(d.Heartbeat) < interval {
 		d.LastValue = "U"
 	}

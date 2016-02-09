@@ -19,7 +19,8 @@ type RrdRawFile struct {
 	datasourceDefs []*rrdRawDatasourceDef
 	rraDefs        []*rrdRawRraDef
 
-	headerSize uint64
+	baseHeaderSize uint64
+	headerSize     uint64
 
 	pdpPreps []*rrdPdpPrep
 	cdpPreps [][]*rrdCdpPrep
@@ -76,6 +77,7 @@ func (f *RrdRawFile) readHeaders() error {
 	if err := f.readRras(); err != nil {
 		return err
 	}
+	f.baseHeaderSize = f.dataFile.CurPosition()
 	if err := f.readLiveHead(); err != nil {
 		return err
 	}

@@ -13,7 +13,7 @@ type DatasourceDDerive struct {
 	DatasourceAbstract
 }
 
-func (d *DatasourceDDerive) UpdatePdpPrep(newValue string, interval float64) (float64, error) {
+func (d *DatasourceDDerive) CalculatePdpPrep(newValue string, interval float64) (float64, error) {
 	if float64(d.Heartbeat) < interval {
 		d.LastValue = "U"
 	}

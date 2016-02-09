@@ -17,9 +17,13 @@ func (d *DatasourceCompute) GetLastValue() string {
 	return d.LastValue
 }
 
-func (d *DatasourceCompute) UpdatePdpPrep(newValue string, interval float64) (float64, error) {
+func (d *DatasourceCompute) CalculatePdpPrep(newValue string, interval float64) (float64, error) {
 	// Compute datasource are never updated
 	return math.NaN(), nil
+}
+
+func (d *DatasourceCompute) UpdatePdp(pdpValue, interval float64) {
+
 }
 
 func (d *DatasourceCompute) DumpTo(dumper DataOutput) error {
