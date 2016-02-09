@@ -1,11 +1,12 @@
 package cdata
 
 import (
-	"github.com/go-errors/errors"
 	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/go-errors/errors"
 )
 
 type rrdRawDatasourceDef struct {
@@ -88,12 +89,12 @@ func (f *RrdRawFile) decodeDatasourceParams(index int, rv reflect.Value) error {
 	return nil
 }
 
-func (f *RrdRawFile) readDatasources() error {
+func (f *RrdRawFile) readDatasources(reader *CDataReader) error {
 	f.datasourceDefs = make([]*rrdRawDatasourceDef, f.header.datasourceCount)
 
 	var err error
 	for i := range f.datasourceDefs {
-		f.datasourceDefs[i], err = readDatasource(f.dataFile)
+		f.datasourceDefs[i], err = readDatasource(reader)
 		if err != nil {
 			return err
 		}
@@ -101,16 +102,16 @@ func (f *RrdRawFile) readDatasources() error {
 	return nil
 }
 
-func readDatasource(dataFile *CDataFile) (*rrdRawDatasourceDef, error) {
-	name, err := dataFile.ReadCString(20)
+func readDatasource(reader *CDataReader) (*rrdRawDatasourceDef, error) {
+	name, err := reader.ReadCString(20)
 	if err != nil {
 		return nil, err
 	}
-	datasourceType, err := dataFile.ReadCString(20)
+	datasourceType, err := reader.ReadCString(20)
 	if err != nil {
 		return nil, err
 	}
-	parameters, err := dataFile.ReadUnivals(10)
+	parameters, err := reader.ReadUnivals(10)
 	if err != nil {
 		return nil, err
 	}

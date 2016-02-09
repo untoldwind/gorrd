@@ -7,11 +7,10 @@ import (
 )
 
 type rrdRawRowIterator struct {
-	dataFile   *CDataFile
+	reader     *CDataReader
 	row        uint64
 	colCount   uint64
 	rowCount   uint64
-	rraStart   uint64
 	rraPtr     uint64
 	startTime  time.Time
 	stepPerRow time.Duration
@@ -20,7 +19,7 @@ type rrdRawRowIterator struct {
 }
 
 func (i *rrdRawRowIterator) seekStart() {
-	i.lastError = i.dataFile.Seek(i.rraStart + (i.rraPtr+1)*i.colCount*i.dataFile.ValueSize())
+	i.reader.Seek((i.rraPtr + 1) * i.colCount * i.reader.ValueSize())
 }
 
 func (i *rrdRawRowIterator) Next() bool {
@@ -32,13 +31,13 @@ func (i *rrdRawRowIterator) Next() bool {
 	} else {
 		i.row++
 		if i.row+i.rraPtr+1 == i.rowCount {
-			i.lastError = i.dataFile.Seek(i.rraStart)
+			i.reader.Seek(0)
 		}
 	}
 
 	if i.lastError == nil {
 		i.lastRow.Timestamp = i.startTime.Add(time.Duration(i.row) * i.stepPerRow)
-		i.lastError = i.dataFile.ReadDoubles(i.lastRow.Values)
+		i.lastError = i.reader.ReadDoubles(i.lastRow.Values)
 	}
 
 	return i.row >= 0 && i.row < i.rowCount

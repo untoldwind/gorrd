@@ -2,12 +2,12 @@ package cdata
 
 import "time"
 
-func (f *RrdRawFile) readLiveHead() error {
-	timeSec, err := f.dataFile.ReadUnival()
+func (f *RrdRawFile) readLiveHead(reader *CDataReader) error {
+	timeSec, err := reader.ReadUnival()
 	if err != nil {
 		return err
 	}
-	timeUsec, err := f.dataFile.ReadUnival()
+	timeUsec, err := reader.ReadUnival()
 	if err != nil {
 		return err
 	}

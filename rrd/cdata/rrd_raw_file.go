@@ -38,12 +38,13 @@ func OpenRrdRawFile(name string, readOnly bool) (*rrd.Rrd, error) {
 	rrdFile := &RrdRawFile{
 		dataFile: dataFile,
 	}
-	if err := rrdFile.readHeaders(); err != nil {
+	reader := dataFile.Reader(0)
+	if err := rrdFile.readHeaders(reader); err != nil {
 		dataFile.Close()
 		return nil, err
 	}
 
-	rrdFile.headerSize = dataFile.CurPosition()
+	rrdFile.headerSize = reader.CurPosition()
 
 	rrdFile.calculateRraStarts()
 
@@ -67,27 +68,27 @@ func (f *RrdRawFile) Close() {
 	f.dataFile.Close()
 }
 
-func (f *RrdRawFile) readHeaders() error {
-	if err := f.readVersionHeader(); err != nil {
+func (f *RrdRawFile) readHeaders(reader *CDataReader) error {
+	if err := f.readVersionHeader(reader); err != nil {
 		return err
 	}
-	if err := f.readDatasources(); err != nil {
+	if err := f.readDatasources(reader); err != nil {
 		return err
 	}
-	if err := f.readRras(); err != nil {
+	if err := f.readRras(reader); err != nil {
 		return err
 	}
-	f.baseHeaderSize = f.dataFile.CurPosition()
-	if err := f.readLiveHead(); err != nil {
+	f.baseHeaderSize = reader.CurPosition()
+	if err := f.readLiveHead(reader); err != nil {
 		return err
 	}
-	if err := f.readPdpPreps(); err != nil {
+	if err := f.readPdpPreps(reader); err != nil {
 		return err
 	}
-	if err := f.readCdpPreps(); err != nil {
+	if err := f.readCdpPreps(reader); err != nil {
 		return err
 	}
-	if err := f.readRraPtrs(); err != nil {
+	if err := f.readRraPtrs(reader); err != nil {
 		return err
 	}
 
@@ -99,7 +100,7 @@ func (f *RrdRawFile) calculateRraStarts() {
 	rraNextStart := f.headerSize
 	for i, rraDef := range f.rraDefs {
 		f.rraStarts[i] = rraNextStart
-		rraNextStart += f.header.datasourceCount * rraDef.pdpPerRow * f.dataFile.ValueSize()
+		rraNextStart += f.header.datasourceCount * rraDef.rowCount * f.dataFile.ValueSize()
 	}
 }
 
@@ -107,11 +108,10 @@ func (f *RrdRawFile) RowIterator(rraIndex int) (rrd.RraRowIterator, error) {
 	stepPerRow := time.Duration(f.header.pdpStep*f.rraDefs[rraIndex].pdpPerRow) * time.Second
 	startTime := f.lastUpdate.Truncate(stepPerRow).Add(-time.Duration(f.rraDefs[rraIndex].rowCount-1) * stepPerRow)
 	iterator := &rrdRawRowIterator{
-		dataFile:   f.dataFile,
+		reader:     f.dataFile.Reader(f.rraStarts[rraIndex]),
 		row:        0,
 		rowCount:   f.rraDefs[rraIndex].rowCount,
 		colCount:   f.header.datasourceCount,
-		rraStart:   f.rraStarts[rraIndex],
 		rraPtr:     f.rraPtrs[rraIndex],
 		startTime:  startTime,
 		stepPerRow: stepPerRow,

@@ -1,10 +1,11 @@
 package cdata
 
 import (
-	"github.com/go-errors/errors"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/go-errors/errors"
 )
 
 type rrdRawRraDef struct {
@@ -114,12 +115,12 @@ func (f *RrdRawFile) decodeRraCpdPreps(rraIndex, dsIndex int, rv reflect.Value) 
 	return nil
 }
 
-func (f *RrdRawFile) readRras() error {
+func (f *RrdRawFile) readRras(reader *CDataReader) error {
 	f.rraDefs = make([]*rrdRawRraDef, f.header.rraCount)
 
 	var err error
 	for i := range f.rraDefs {
-		f.rraDefs[i], err = readRra(f.dataFile, i)
+		f.rraDefs[i], err = readRra(reader, i)
 		if err != nil {
 			return err
 		}
@@ -127,20 +128,20 @@ func (f *RrdRawFile) readRras() error {
 	return nil
 }
 
-func readRra(dataFile *CDataFile, index int) (*rrdRawRraDef, error) {
-	rraType, err := dataFile.ReadCString(20)
+func readRra(reader *CDataReader, index int) (*rrdRawRraDef, error) {
+	rraType, err := reader.ReadCString(20)
 	if err != nil {
 		return nil, err
 	}
-	rowCount, err := dataFile.ReadUnsignedLong()
+	rowCount, err := reader.ReadUnsignedLong()
 	if err != nil {
 		return nil, err
 	}
-	pdpPerRow, err := dataFile.ReadUnsignedLong()
+	pdpPerRow, err := reader.ReadUnsignedLong()
 	if err != nil {
 		return nil, err
 	}
-	parameters, err := dataFile.ReadUnivals(10)
+	parameters, err := reader.ReadUnivals(10)
 	if err != nil {
 		return nil, err
 	}

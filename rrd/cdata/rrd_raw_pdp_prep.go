@@ -5,12 +5,12 @@ type rrdPdpPrep struct {
 	scratch             []unival
 }
 
-func (f *RrdRawFile) readPdpPreps() error {
+func (f *RrdRawFile) readPdpPreps(reader *CDataReader) error {
 	f.pdpPreps = make([]*rrdPdpPrep, f.header.datasourceCount)
 
 	var err error
 	for i := range f.pdpPreps {
-		f.pdpPreps[i], err = f.readPdpPrep()
+		f.pdpPreps[i], err = f.readPdpPrep(reader)
 		if err != nil {
 			return err
 		}
@@ -18,12 +18,12 @@ func (f *RrdRawFile) readPdpPreps() error {
 	return nil
 }
 
-func (f *RrdRawFile) readPdpPrep() (*rrdPdpPrep, error) {
-	value, err := f.dataFile.ReadCString(30)
+func (f *RrdRawFile) readPdpPrep(reader *CDataReader) (*rrdPdpPrep, error) {
+	value, err := reader.ReadCString(30)
 	if err != nil {
 		return nil, err
 	}
-	scratch, err := f.dataFile.ReadUnivals(10)
+	scratch, err := reader.ReadUnivals(10)
 	if err != nil {
 		return nil, err
 	}

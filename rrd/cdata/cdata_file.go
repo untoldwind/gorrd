@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"math"
 	"os"
-	"sync"
 
 	"github.com/go-errors/errors"
 )
@@ -13,12 +12,16 @@ import (
 // CDataFile Helper to access files created from C code by directly mapping structs
 // Honours byte order as well as byte alignment
 type CDataFile struct {
-	lock          sync.Mutex
 	file          *os.File
-	position      uint64
 	byteOrder     binary.ByteOrder
 	byteAlignment uint64
 	valueSize     uint64
+}
+
+type CDataReader struct {
+	*CDataFile
+	startPosition uint64
+	position      uint64
 }
 
 // Open a CDataFile
@@ -35,19 +38,14 @@ func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteA
 
 	return &CDataFile{
 		file:          file,
-		position:      0,
 		byteOrder:     byteOrder,
 		byteAlignment: byteAlignment,
 		valueSize:     valueSize,
 	}, nil
 }
 
-func (f *CDataFile) Lock() {
-	f.lock.Lock()
-}
-
-func (f *CDataFile) Unlock() {
-	f.lock.Unlock()
+func (f *CDataFile) ValueSize() uint64 {
+	return f.valueSize
 }
 
 // Close the CDataFile
@@ -55,9 +53,17 @@ func (f *CDataFile) Close() error {
 	return f.file.Close()
 }
 
-func (f *CDataFile) ReadBytes(len int) ([]byte, error) {
+func (f *CDataFile) Reader(startPosition uint64) *CDataReader {
+	return &CDataReader{
+		CDataFile:     f,
+		startPosition: startPosition,
+		position:      startPosition,
+	}
+}
+
+func (f *CDataReader) ReadBytes(len int) ([]byte, error) {
 	data := make([]byte, len)
-	if count, err := f.file.Read(data); err != nil {
+	if count, err := f.file.ReadAt(data, int64(f.position)); err != nil {
 		return nil, err
 	} else if count != len {
 		return nil, errors.Errorf("Expected %d bytes (only %d read)", len, count)
@@ -66,7 +72,7 @@ func (f *CDataFile) ReadBytes(len int) ([]byte, error) {
 	return data, nil
 }
 
-func (f *CDataFile) ReadCString(maxLen int) (string, error) {
+func (f *CDataReader) ReadCString(maxLen int) (string, error) {
 	data, err := f.ReadBytes(maxLen)
 	if err != nil {
 		return "", nil
@@ -77,10 +83,8 @@ func (f *CDataFile) ReadCString(maxLen int) (string, error) {
 	return "", errors.Errorf("Expected null terminated string")
 }
 
-func (f *CDataFile) ReadUnival() (unival, error) {
-	if err := f.alignOffset(); err != nil {
-		return 0, err
-	}
+func (f *CDataReader) ReadUnival() (unival, error) {
+	f.alignOffset()
 	data, err := f.ReadBytes(8)
 	if err != nil {
 		return 0, nil
@@ -88,7 +92,7 @@ func (f *CDataFile) ReadUnival() (unival, error) {
 	return unival(f.byteOrder.Uint64(data)), nil
 }
 
-func (f *CDataFile) ReadDouble() (float64, error) {
+func (f *CDataReader) ReadDouble() (float64, error) {
 	unival, err := f.ReadUnival()
 	if err != nil {
 		return 0, err
@@ -96,10 +100,8 @@ func (f *CDataFile) ReadDouble() (float64, error) {
 	return unival.AsDouble(), nil
 }
 
-func (f *CDataFile) ReadDoubles(buffer []float64) error {
-	if err := f.alignOffset(); err != nil {
-		return err
-	}
+func (f *CDataReader) ReadDoubles(buffer []float64) error {
+	f.alignOffset()
 	data, err := f.ReadBytes(8 * len(buffer))
 	if err != nil {
 		return err
@@ -111,7 +113,7 @@ func (f *CDataFile) ReadDoubles(buffer []float64) error {
 	return nil
 }
 
-func (f *CDataFile) ReadUnsignedLong() (uint64, error) {
+func (f *CDataReader) ReadUnsignedLong() (uint64, error) {
 	unival, err := f.ReadUnival()
 	if err != nil {
 		return 0, err
@@ -119,10 +121,8 @@ func (f *CDataFile) ReadUnsignedLong() (uint64, error) {
 	return unival.AsUnsignedLong(), nil
 }
 
-func (f *CDataFile) ReadUnivals(count int) ([]unival, error) {
-	if err := f.alignOffset(); err != nil {
-		return nil, err
-	}
+func (f *CDataReader) ReadUnivals(count int) ([]unival, error) {
+	f.alignOffset()
 	data, err := f.ReadBytes(8 * count)
 	if err != nil {
 		return nil, nil
@@ -134,27 +134,18 @@ func (f *CDataFile) ReadUnivals(count int) ([]unival, error) {
 	return result, nil
 }
 
-func (f *CDataFile) Seek(offset uint64) error {
-	_, err := f.file.Seek(int64(offset), 0)
-	return err
+func (f *CDataReader) Seek(offset uint64) {
+	f.position = f.startPosition + offset
 }
 
-func (f *CDataFile) ValueSize() uint64 {
-	return f.valueSize
-}
-
-func (f *CDataFile) CurPosition() uint64 {
+func (f *CDataReader) CurPosition() uint64 {
 	return f.position
 }
 
-func (f *CDataFile) alignOffset() error {
-	skip := f.byteAlignment - (f.position % f.byteAlignment)
-	if skip >= f.byteAlignment {
-		return nil
+func (f *CDataReader) alignOffset() {
+	mod := f.position % f.byteAlignment
+	if mod == 0 {
+		return
 	}
-	if _, err := f.file.Seek(int64(skip), 1); err != nil {
-		return err
-	}
-	f.position += skip
-	return nil
+	f.position += f.byteAlignment - mod
 }
