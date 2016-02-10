@@ -2,6 +2,8 @@ package cdata
 
 import "time"
 
+const rrdRawLiveHeaderSize = 16
+
 func (f *RrdRawFile) readLiveHead(reader *CDataReader) error {
 	timeSec, err := reader.ReadUnival()
 	if err != nil {

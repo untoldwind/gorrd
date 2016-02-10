@@ -15,3 +15,11 @@ func (u unival) AsLong() int64 {
 func (u unival) AsUnsignedLong() uint64 {
 	return uint64(u)
 }
+
+func univalForUnsignedLong(val uint64) unival {
+	return unival(val)
+}
+
+func univalForDouble(val float64) unival {
+	return *(*unival)(unsafe.Pointer(&val))
+}

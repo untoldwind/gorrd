@@ -5,6 +5,8 @@ type rrdPdpPrep struct {
 	scratch             []unival
 }
 
+const rrdRawPdpPrepSize = 30 + 8*10
+
 func (f *RrdRawFile) readPdpPreps(reader *CDataReader) error {
 	f.pdpPreps = make([]*rrdPdpPrep, f.header.datasourceCount)
 
@@ -31,4 +33,25 @@ func (f *RrdRawFile) readPdpPrep(reader *CDataReader) (*rrdPdpPrep, error) {
 		lastDatasourceValue: value,
 		scratch:             scratch,
 	}, nil
+}
+
+func (f *RrdRawFile) storePdpPreps() error {
+	writer := f.dataFile.Writer(f.baseHeaderSize + rrdRawLiveHeaderSize)
+
+	for _, pdpPrep := range f.pdpPreps {
+		if err := storePdpPrep(writer, pdpPrep); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func storePdpPrep(writer *CDataWriter, pdpPrep *rrdPdpPrep) error {
+	if err := writer.WriteCString(pdpPrep.lastDatasourceValue, 30); err != nil {
+		return err
+	}
+	if err := writer.WriteUnivals(pdpPrep.scratch); err != nil {
+		return err
+	}
+	return nil
 }

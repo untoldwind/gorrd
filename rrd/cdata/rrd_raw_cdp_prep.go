@@ -29,3 +29,23 @@ func (f *RrdRawFile) readCdpPrep(reader *CDataReader) (*rrdCdpPrep, error) {
 		scratch: scratch,
 	}, nil
 }
+
+func (f *RrdRawFile) storeCdpPreps() error {
+	writer := f.dataFile.Writer(f.baseHeaderSize + rrdRawLiveHeaderSize + rrdRawPdpPrepSize*f.header.datasourceCount)
+
+	for _, cdpPreps := range f.cdpPreps {
+		for _, cdpPrep := range cdpPreps {
+			if err := storeCdpPrep(writer, cdpPrep); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func storeCdpPrep(writer *CDataWriter, cdpPrep *rrdCdpPrep) error {
+	if err := writer.WriteUnivals(cdpPrep.scratch); err != nil {
+		return err
+	}
+	return nil
+}

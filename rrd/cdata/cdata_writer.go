@@ -1,8 +1,9 @@
 package cdata
 
 import (
-	"github.com/go-errors/errors"
 	"math"
+
+	"github.com/go-errors/errors"
 )
 
 type CDataWriter struct {
@@ -33,6 +34,15 @@ func (f *CDataWriter) WriteCString(str string, maxLen int) error {
 
 func (f *CDataWriter) WriteUnival(val unival) error {
 	return f.WriteUnsignedLong(val.AsUnsignedLong())
+}
+
+func (f *CDataWriter) WriteUnivals(univals []unival) error {
+	for _, val := range univals {
+		if err := f.WriteUnsignedLong(val.AsUnsignedLong()); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (f *CDataWriter) WriteDouble(val float64) error {
