@@ -94,7 +94,10 @@ func (f *RrdRawFile) StoreDatasourceParams(index int, params interface{}) error 
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return errors.Errorf("Datasource params must be a pointer")
 	}
-	return f.encodeDatasourceParams(index, rv.Elem())
+	if err := f.encodeDatasourceParams(index, rv.Elem()); err != nil {
+		return err
+	}
+	return f.storePdpPreps()
 }
 
 func (f *RrdRawFile) encodeDatasourceParams(index int, rv reflect.Value) error {

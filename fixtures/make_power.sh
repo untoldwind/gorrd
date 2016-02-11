@@ -1,5 +1,13 @@
 #!/bin/bash
 
+if [ ! -f "minimal.rrd" ];
+then
+    rrdtool create minimal.rrd \
+       --start now-10s --step 1s \
+       DS:watts:GAUGE:5m:0:100000 \
+       RRA:AVERAGE:0.5:1s:5m
+fi
+
 if [ ! -f "power.rrd" ];
 then
     rrdtool create power.rrd \

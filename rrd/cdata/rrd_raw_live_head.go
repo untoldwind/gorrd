@@ -1,6 +1,9 @@
 package cdata
 
-import "time"
+import (
+	"github.com/go-errors/errors"
+	"time"
+)
 
 const rrdRawLiveHeaderSize = 16
 
@@ -17,8 +20,10 @@ func (f *RrdRawFile) readLiveHead(reader *CDataReader) error {
 	return nil
 }
 
-func (f *RrdRawFile) StoreLastUpdate(lastUpdate time.Time) {
+func (f *RrdRawFile) StoreLastUpdate(lastUpdate time.Time) error {
 	writer := f.dataFile.Writer(f.baseHeaderSize)
-	writer.WriteUnival(unival(lastUpdate.Unix()))
-	writer.WriteUnival(unival(lastUpdate.UnixNano() / 1000))
+	if err := writer.WriteUnival(unival(lastUpdate.Unix())); err != nil {
+		return errors.Wrap(err, 0)
+	}
+	return writer.WriteUnival(unival(lastUpdate.Nanosecond() / 1000))
 }

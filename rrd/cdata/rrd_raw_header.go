@@ -34,18 +34,18 @@ func (f *RrdRawFile) readVersionHeader(reader *CDataReader) error {
 
 	datasourceCount, err := reader.ReadUnsignedLong()
 	if err != nil {
-		return err
+		return errors.Wrap(err, 0)
 	}
 	rraCount, err := reader.ReadUnsignedLong()
 	if err != nil {
-		return err
+		return errors.Wrap(err, 0)
 	}
 	pdpStep, err := reader.ReadUnsignedLong()
 	if err != nil {
-		return err
+		return errors.Wrap(err, 0)
 	}
 	if _, err = reader.ReadUnivals(10); err != nil {
-		return err
+		return errors.Wrap(err, 0)
 	}
 
 	f.header = &rrdRawHeader{

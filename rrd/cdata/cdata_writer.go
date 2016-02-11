@@ -14,7 +14,7 @@ type CDataWriter struct {
 
 func (f *CDataWriter) WriteBytes(data []byte) error {
 	if count, err := f.file.WriteAt(data, int64(f.position)); err != nil {
-		return err
+		return errors.Wrap(err, 0)
 	} else if count != len(data) {
 		return errors.Errorf("Expected %d bytes (only %d read)", len(data), count)
 	}

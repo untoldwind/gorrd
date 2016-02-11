@@ -27,7 +27,7 @@ func updateCommand(ctx *cli.Context) {
 		return
 	}
 
-	rrd, err := cdata.OpenRrdRawFile(filename, true)
+	rrd, err := cdata.OpenRrdRawFile(filename, false)
 	if err != nil {
 		showError(ctx, err)
 		return

@@ -21,13 +21,15 @@ func (r *Rrd) Update(timestamp time.Time, values []string) error {
 		}
 	}
 
-	elapsedSteps := int64(timestamp.Sub(r.LastUpdate) / r.Step)
+	elapsedSteps := int64(timestamp.Sub(r.LastUpdate.Truncate(r.Step)) / r.Step)
 
 	if elapsedSteps == 0 {
-		r.simpleUpdate(newPdps, interval)
+		if err := r.simpleUpdate(newPdps, interval); err != nil {
+			return err
+		}
 	}
 
-	return nil
+	return r.Store.StoreLastUpdate(timestamp)
 }
 
 func (r *Rrd) updatePdpPrep(timestamp time.Time, values []string) ([]float64, error) {
@@ -44,6 +46,15 @@ func (r *Rrd) updatePdpPrep(timestamp time.Time, values []string) ([]float64, er
 	return result, nil
 }
 
-func (r *Rrd) simpleUpdate(values []float64, interval float64) error {
+func (r *Rrd) simpleUpdate(pdpPreps []float64, interval float64) error {
+	for i, pdpPrep := range pdpPreps {
+		r.Datasources[i].UpdatePdp(pdpPrep, interval)
+	}
+
+	for i, datasource := range r.Datasources {
+		if err := r.Store.StoreDatasourceParams(i, datasource); err != nil {
+			return err
+		}
+	}
 	return nil
 }

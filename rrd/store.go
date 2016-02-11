@@ -12,7 +12,7 @@ type Store interface {
 	StoreDatasourceParams(index int, params interface{}) error
 	ReadRraParams(index int, params interface{}) error
 	StoreRraParams(index int, params interface{}) error
-	StoreLastUpdate(lastUpdate time.Time)
+	StoreLastUpdate(lastUpdate time.Time) error
 
 	RowIterator(rraIndex int) (RraRowIterator, error)
 	Close()

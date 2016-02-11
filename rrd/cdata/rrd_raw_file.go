@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"time"
 
+	"github.com/go-errors/errors"
 	"github.com/untoldwind/gorrd/rrd"
 )
 
@@ -41,7 +42,7 @@ func OpenRrdRawFile(name string, readOnly bool) (*rrd.Rrd, error) {
 	reader := dataFile.Reader(0)
 	if err := rrdFile.readHeaders(reader); err != nil {
 		dataFile.Close()
-		return nil, err
+		return nil, errors.Wrap(err, 0)
 	}
 
 	rrdFile.headerSize = reader.CurPosition()
@@ -50,7 +51,7 @@ func OpenRrdRawFile(name string, readOnly bool) (*rrd.Rrd, error) {
 
 	rrd, err := rrd.NewRrd(rrdFile)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 0)
 	}
 
 	return rrd, nil
@@ -70,26 +71,26 @@ func (f *RrdRawFile) Close() {
 
 func (f *RrdRawFile) readHeaders(reader *CDataReader) error {
 	if err := f.readVersionHeader(reader); err != nil {
-		return err
+		return errors.Wrap(err, 0)
 	}
 	if err := f.readDatasources(reader); err != nil {
-		return err
+		return errors.Wrap(err, 0)
 	}
 	if err := f.readRras(reader); err != nil {
-		return err
+		return errors.Wrap(err, 0)
 	}
 	f.baseHeaderSize = reader.CurPosition()
 	if err := f.readLiveHead(reader); err != nil {
-		return err
+		return errors.Wrap(err, 0)
 	}
 	if err := f.readPdpPreps(reader); err != nil {
-		return err
+		return errors.Wrap(err, 0)
 	}
 	if err := f.readCdpPreps(reader); err != nil {
-		return err
+		return errors.Wrap(err, 0)
 	}
 	if err := f.readRraPtrs(reader); err != nil {
-		return err
+		return errors.Wrap(err, 0)
 	}
 
 	return nil

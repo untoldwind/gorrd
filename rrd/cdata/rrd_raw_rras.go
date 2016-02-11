@@ -93,7 +93,10 @@ func (f *RrdRawFile) StoreRraParams(index int, params interface{}) error {
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return errors.Errorf("Rra params must be a pointer")
 	}
-	return f.encodeRraParams(index, rv.Elem())
+	if err := f.encodeRraParams(index, rv.Elem()); err != nil {
+		return err
+	}
+	return f.storeCdpPreps()
 }
 
 func (f *RrdRawFile) encodeRraParams(index int, rv reflect.Value) error {

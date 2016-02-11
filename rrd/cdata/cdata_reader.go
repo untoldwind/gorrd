@@ -38,7 +38,7 @@ func (f *CDataReader) ReadUnival() (unival, error) {
 	f.alignOffset()
 	data, err := f.ReadBytes(8)
 	if err != nil {
-		return 0, nil
+		return 0, errors.Wrap(err, 0)
 	}
 	return unival(f.byteOrder.Uint64(data)), nil
 }
@@ -76,7 +76,7 @@ func (f *CDataReader) ReadUnivals(count int) ([]unival, error) {
 	f.alignOffset()
 	data, err := f.ReadBytes(8 * count)
 	if err != nil {
-		return nil, nil
+		return nil, errors.Wrap(err, 0)
 	}
 	result := make([]unival, count)
 	for i := range result {
