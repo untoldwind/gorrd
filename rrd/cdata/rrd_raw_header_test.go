@@ -19,11 +19,11 @@ func TestRrdRawHeader(t *testing.T) {
 		return
 	}
 
-	tempDir := os.TempDir()
-	rrdFileName := filepath.Join(tempDir, fmt.Sprintf("minimal%d.rrd", time.Now().Unix()))
-	defer os.Remove(rrdFileName)
-
 	Convey("Given minimal rrdfile", t, func() {
+		tempDir := os.TempDir()
+		rrdFileName := filepath.Join(tempDir, fmt.Sprintf("min1-%s.rrd", time.Now().String()))
+		defer os.Remove(rrdFileName)
+
 		cmd := exec.Command(rrdtool,
 			"create",
 			rrdFileName,
