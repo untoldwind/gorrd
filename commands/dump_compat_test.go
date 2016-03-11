@@ -1,17 +1,75 @@
 package commands
 
 import (
+	"bytes"
 	"encoding/xml"
+	"flag"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/codegangsta/cli"
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+type elementRef struct {
+	name  string
+	count int
+}
+
+func (e *elementRef) Inc() {
+	e.count++
+}
+
+func (e *elementRef) String() string {
+	return fmt.Sprintf("%s[%d]", e.name, e.count)
+}
+
+func flattenXml(in io.Reader) (map[string]string, error) {
+	decoder := xml.NewDecoder(in)
+	result := make(map[string]string, 0)
+
+	buffer := bytes.NewBufferString("")
+	elementStack := make([]*elementRef, 0)
+	var last *elementRef
+	for {
+		token, err := decoder.Token()
+		if err == io.EOF {
+			return result, nil
+		} else if err != nil {
+			return nil, err
+		}
+		switch token.(type) {
+		case xml.StartElement:
+			name := token.(xml.StartElement).Name.Local
+			if last != nil && last.name == name {
+				last.Inc()
+				elementStack = append(elementStack, last)
+			} else {
+				last = nil
+				elementStack = append(elementStack, &elementRef{name: name})
+			}
+			buffer.Reset()
+		case xml.EndElement:
+			key := ""
+			for i, elementRef := range elementStack {
+				if i > 0 {
+					key += "/"
+				}
+				key += elementRef.String()
+			}
+			result[key] = strings.TrimSpace(buffer.String())
+			elementStack, last = elementStack[0:len(elementStack)-1], elementStack[len(elementStack)-1]
+		case xml.CharData:
+			buffer.Write(token.(xml.CharData))
+		}
+	}
+}
 
 func TestDumpCompatibility(t *testing.T) {
 	rrdtool, err := exec.LookPath("rrdtool")
@@ -43,16 +101,27 @@ func TestDumpCompatibility(t *testing.T) {
 
 			So(err, ShouldBeNil)
 
-			rrdDecoder := xml.NewDecoder(stdout)
 			cmd.Start()
+			expectedResult, err := flattenXml(stdout)
 
-			for {
-				token, err := rrdDecoder.Token()
-				if err == io.EOF {
-					break
-				}
-				Printf("%#v", token)
-			}
+			So(err, ShouldBeNil)
+
+			pipeReader, pipeWriter := io.Pipe()
+			go func() {
+				flags := flag.NewFlagSet("gorrd", flag.ContinueOnError)
+				flags.Parse([]string{rrdFileName})
+				ctx := cli.NewContext(&cli.App{
+					Writer: pipeWriter,
+				}, flags, nil)
+				dumpCommand(ctx)
+				pipeWriter.Close()
+			}()
+
+			actualResult, err := flattenXml(pipeReader)
+
+			So(err, ShouldBeNil)
+
+			So(actualResult, ShouldResemble, expectedResult)
 		})
 	})
 }
