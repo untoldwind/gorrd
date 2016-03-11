@@ -1,17 +1,17 @@
 VERSION = $(shell date -u +.%Y%m%d.%H%M%S)
 
-all: export GOPATH=${PWD}/Godeps/_workspace:${PWD}/../../../..
+all: export GOPATH=${PWD}/../../../..
 all: format
 	@mkdir -p bin/
 	@echo "--> Running go build"
 	@go build -ldflags "-X github.com/untoldwind/gorrd/config.versionMinor=${VERSION}" -v -o bin/gorrd github.com/untoldwind/gorrd
 
-format: export GOPATH=${PWD}/Godeps/_workspace:${PWD}/../../../..
+format: export GOPATH=${PWD}/../../../..
 format:
 	@echo "--> Running go fmt"
 	@go fmt ./...
 
-test: export GOPATH=${PWD}/Godeps/_workspace:${PWD}/../../../..
+test: export GOPATH=${PWD}/../../../..
 test:
 	@echo "--> Running tests"
 	@go test -v ./...

@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/untoldwind/gorrd",
-	"GoVersion": "go1.5.3",
+	"GoVersion": "go1.6",
 	"Packages": [
 		"./..."
 	],
@@ -29,7 +29,22 @@
 			"Rev": "01fedaa993c0a9f9aa55111501cd7c81a49e812e"
 		},
 		{
+			"ImportPath": "github.com/smartystreets/assertions/internal/oglematchers",
+			"Comment": "1.5.0-405-g01fedaa",
+			"Rev": "01fedaa993c0a9f9aa55111501cd7c81a49e812e"
+		},
+		{
 			"ImportPath": "github.com/smartystreets/goconvey/convey",
+			"Comment": "1.5.0-449-g530dd3d",
+			"Rev": "530dd3d2cafa09958178e8c557bc4abeea1651a5"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey/gotest",
+			"Comment": "1.5.0-449-g530dd3d",
+			"Rev": "530dd3d2cafa09958178e8c557bc4abeea1651a5"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey/reporting",
 			"Comment": "1.5.0-449-g530dd3d",
 			"Rev": "530dd3d2cafa09958178e8c557bc4abeea1651a5"
 		}
