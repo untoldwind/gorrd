@@ -14,7 +14,17 @@ format:
 test: export GOPATH=${PWD}/../../../..
 test:
 	@echo "--> Running tests"
-	@go test -v ./...
+	@go test -v ./commands/... ./config/... ./rrd/...
+	@$(MAKE) vet
+
+coverage:
+	@echo "--> Running tests with coverage"
+	@echo "" > coverage.txt
+	for pkg in $(shell go list ./commands/... ./config/... ./rrd/...); do \
+		go test -coverprofile=.pkg.coverage -covermode=atomic -v $$pkg ; \
+		cat .pkg.coverage >> coverage.txt ; \
+	done
+	@rm .pkg.coverage
 	@$(MAKE) vet
 
 godepssave:

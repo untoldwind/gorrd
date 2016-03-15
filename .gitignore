@@ -3,3 +3,4 @@ bin/
 .tags
 *.iml
 .idea/
+coverage.txt
