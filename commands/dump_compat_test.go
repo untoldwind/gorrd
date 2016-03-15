@@ -88,8 +88,8 @@ func TestDumpCompatibility(t *testing.T) {
 			rrdFileName,
 			"--start", "now",
 			"--step", "1s",
-			"DS:watts:GAUGE:5m:0:100000",
-			"RRA:AVERAGE:0.5:5s:60m")
+			"DS:watts:GAUGE:300:0:100000",
+			"RRA:AVERAGE:0.5:5:3600")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 
