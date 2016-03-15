@@ -1,6 +1,7 @@
 package commands_test
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/hex"
 	"encoding/xml"
@@ -103,27 +104,40 @@ func shouldHaveSameContentAs(actual interface{}, expected ...interface{}) string
 	}
 	defer expectedIn.Close()
 
-	count := 0
-	actualBytes := make([]byte, 16)
-	expectedBytes := make([]byte, 16)
+	actualPipeIn, actualPipeOut := io.Pipe()
+	actualScanner := bufio.NewScanner(actualPipeIn)
+	actualDumper := hex.Dumper(actualPipeOut)
+	go func() {
+		io.Copy(actualDumper, actualIn)
+		actualDumper.Close()
+		actualPipeOut.Close()
+	}()
+
+	expectedPipeIn, expectedPipeOut := io.Pipe()
+	expectedScanner := bufio.NewScanner(expectedPipeIn)
+	expectedDumper := hex.Dumper(expectedPipeOut)
+	go func() {
+		io.Copy(expectedDumper, expectedIn)
+		expectedDumper.Close()
+		expectedPipeOut.Close()
+	}()
+
 	for {
-		actualCount, err := actualIn.Read(actualBytes)
-		if err != nil && err != io.EOF {
-			return err.Error()
+		actualNext := actualScanner.Scan()
+		expectedNext := expectedScanner.Scan()
+		if expectedNext && !actualNext {
+			return fmt.Sprintf("%v and %v differ: extra Line %s", actual, expected[0], expectedScanner.Text())
 		}
-		expectedCount, err := expectedIn.Read(expectedBytes)
-		if err != nil && err != io.EOF {
-			return err.Error()
+		if !expectedNext && actualNext {
+			return fmt.Sprintf("%v and %v differ: extra Line %s", actual, expected[0], actualScanner.Text())
 		}
-		actualHex := hex.Dump(actualBytes[0:actualCount])
-		expectedHex := hex.Dump(expectedBytes[0:expectedCount])
-		if actualHex != expectedHex {
-			return fmt.Sprintf("%v and %v differ at %d: %s != %s", actual, expected[0], count, actualHex, expectedHex)
+		if actualScanner.Text() != expectedScanner.Text() {
+			return fmt.Sprintf("%v and %v differ: %s != %s", actual, expected[0], actualScanner.Text(), expectedScanner.Text())
 		}
-		if actualCount == 0 || expectedCount == 0 {
+		if !actualNext || !expectedNext {
 			break
 		}
-		count += actualCount
 	}
+
 	return ""
 }
