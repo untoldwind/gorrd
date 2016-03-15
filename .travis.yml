@@ -2,6 +2,7 @@ sudo: false
 language: go
 go:
 - 1.6
+install: go version
 script: make all coverage
 before_install:
   - pip install --user codecov
