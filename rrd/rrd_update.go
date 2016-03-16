@@ -96,7 +96,7 @@ func (r *Rrd) processAllPdp(newPdps []float64, elapsedSteps, procPdpCount uint64
 
 func (r *Rrd) updateAllCdpPrep(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error {
 	for _, rra := range r.Rras {
-		if err := rra.UpdateCdp(elapsedSteps, procPdpCount); err != nil {
+		if err := rra.UpdateCdp(pdpTemp, elapsedSteps, procPdpCount); err != nil {
 			return err
 		}
 	}

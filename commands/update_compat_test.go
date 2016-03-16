@@ -33,7 +33,7 @@ func TestUpdateCompatibility(t *testing.T) {
 			"--start", "1455218381",
 			"--step", "300",
 			"DS:watts:GAUGE:300:0:100000",
-			"RRA:AVERAGE:0.5:5:3600")
+			"RRA:AVERAGE:0.5:12:24")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 

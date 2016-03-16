@@ -3,7 +3,7 @@ package rrd
 type Rra interface {
 	GetRowCount() uint64
 	GetPdpPerRow() uint64
-	UpdateCdp(elapsedSteps, procPdpCount uint64) error
+	UpdateCdp(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error
 	DumpTo(rrdStore Store, dumper DataOutput) error
 }
 
@@ -48,12 +48,20 @@ func (r *RraAbstractGeneric) GetPdpPerRow() uint64 {
 	return r.PdpPerRow
 }
 
-func (r *RraAbstractGeneric) UpdateCdp(elapsedSteps, procPdpCount uint64) error {
+func (r *RraAbstractGeneric) UpdateCdp(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error {
 	startPdpOffset := r.PdpPerRow - procPdpCount%r.PdpPerRow
+	var rraStepCount uint64
 	if startPdpOffset <= elapsedSteps {
+		rraStepCount = minUInt64((elapsedSteps-startPdpOffset)/r.PdpPerRow+1, r.RowCount)
+	}
+	if r.PdpPerRow > 1 {
+		if rraStepCount > 0 {
 
+		}
 	} else {
+		if elapsedSteps > 1 {
 
+		}
 	}
 	return nil
 }
@@ -94,4 +102,11 @@ func newRra(index int, rraType string, store Store) (Rra, error) {
 		return newRraAverage(index, store)
 	}
 	return nil, nil
+}
+
+func minUInt64(a, b uint64) uint64 {
+	if a < b {
+		return a
+	}
+	return b
 }
