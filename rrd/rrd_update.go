@@ -24,7 +24,11 @@ func (r *Rrd) Update(timestamp time.Time, values []string) error {
 			return err
 		}
 	} else {
-		if err := r.processAllPdp(newPdps, elapsedSteps, procPdpCount, interval, preInt, postInt); err != nil {
+		pdpTemp, err := r.processAllPdp(newPdps, elapsedSteps, procPdpCount, interval, preInt, postInt)
+		if err != nil {
+			return err
+		}
+		if err := r.updateAllCdpPrep(pdpTemp, elapsedSteps, procPdpCount); err != nil {
 			return err
 		}
 	}
@@ -82,14 +86,19 @@ func (r *Rrd) simpleUpdate(newPdps []float64, interval float64) error {
 	return nil
 }
 
-func (r *Rrd) processAllPdp(newPdps []float64, elapsedSteps, procPdpCount uint64, interval, preInt, postInt float64) error {
+func (r *Rrd) processAllPdp(newPdps []float64, elapsedSteps, procPdpCount uint64, interval, preInt, postInt float64) ([]float64, error) {
 	pdpTemp := make([]float64, len(newPdps))
 	for i, newPdp := range newPdps {
-		pdpTemp[i] = r.Datasources[i].ProcessPdp(newPdp, interval, preInt, elapsedSteps, r.Step)
+		pdpTemp[i] = r.Datasources[i].ProcessPdp(newPdp, interval, preInt, postInt, elapsedSteps, r.Step)
 	}
-	return nil
+	return pdpTemp, nil
 }
 
-func (r *Rrd) processPdp(dataource Datasource) error {
+func (r *Rrd) updateAllCdpPrep(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error {
+	for _, rra := range r.Rras {
+		if err := rra.UpdateCdp(elapsedSteps, procPdpCount); err != nil {
+			return err
+		}
+	}
 	return nil
 }

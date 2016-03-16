@@ -3,6 +3,7 @@ package rrd
 type Rra interface {
 	GetRowCount() uint64
 	GetPdpPerRow() uint64
+	UpdateCdp(elapsedSteps, procPdpCount uint64) error
 	DumpTo(rrdStore Store, dumper DataOutput) error
 }
 
@@ -45,6 +46,16 @@ func (r *RraAbstractGeneric) GetRowCount() uint64 {
 
 func (r *RraAbstractGeneric) GetPdpPerRow() uint64 {
 	return r.PdpPerRow
+}
+
+func (r *RraAbstractGeneric) UpdateCdp(elapsedSteps, procPdpCount uint64) error {
+	startPdpOffset := r.PdpPerRow - procPdpCount%r.PdpPerRow
+	if startPdpOffset <= elapsedSteps {
+
+	} else {
+
+	}
+	return nil
 }
 
 func (r *RraAbstractGeneric) DumpTo(rrdStore Store, dumper DataOutput) error {
