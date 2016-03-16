@@ -7,8 +7,9 @@ install:
   - rrdtool --version
 script: make all coverage
 before_install:
-  - pip install --user codecov>=1.6.5
+  - pip install --user codecov
 after_success:
+  - cat coverage.txt
   - codecov
 addons:
   apt:
