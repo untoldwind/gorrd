@@ -4,7 +4,7 @@ type Rra interface {
 	GetRowCount() uint64
 	GetPdpPerRow() uint64
 	UpdateCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error
-	UpdateAberantCdp(pdpTemp []float64) error
+	UpdateAberantCdp(pdpTemp []float64, first bool) error
 	DumpTo(rrdStore Store, dumper DataOutput) error
 }
 
@@ -70,7 +70,17 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, pro
 	return nil
 }
 
-func (r *RraAbstractGeneric) UpdateAberantCdp(pdpTemp []float64) error {
+func (r *RraAbstractGeneric) UpdateAberantCdp(pdpTemp []float64, first bool) error {
+	if first {
+		for i, pdp := range pdpTemp {
+			r.CpdPreps[i].PrimaryValue = pdp
+		}
+	} else {
+		for i, pdp := range pdpTemp {
+			r.CpdPreps[i].SecondaryValue = pdp
+		}
+	}
+
 	if r.UpdateAberantCdpFunc != nil {
 		return r.UpdateAberantCdpFunc(pdpTemp)
 	}

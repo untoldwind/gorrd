@@ -34,6 +34,9 @@ func (r *Rrd) Update(timestamp time.Time, values []string) error {
 		if err := r.updateAberrantCdps(pdpTemp, elapsedSteps); err != nil {
 			return err
 		}
+		if err := r.writeToRras(); err != nil {
+			return err
+		}
 	}
 
 	return r.Store.StoreLastUpdate(timestamp)
@@ -53,27 +56,27 @@ func (r *Rrd) calculatePdpPreps(interval float64, values []string) ([]float64, e
 }
 
 func (r *Rrd) calculateElapsedSteps(timestamp time.Time, interval float64) (uint64, float64, float64, uint64) {
-	proc_pdp_age := r.LastUpdate.Unix() % int64(r.Step/time.Second)
-	proc_pdp_st := r.LastUpdate.Unix() - proc_pdp_age
+	procPdpAge := r.LastUpdate.Unix() % int64(r.Step/time.Second)
+	procPdpSt := r.LastUpdate.Unix() - procPdpAge
 
-	occu_pdp_age := timestamp.Unix() % int64(r.Step/time.Second)
-	occu_pdp_st := timestamp.Unix() - occu_pdp_age
+	occuPdpAge := timestamp.Unix() % int64(r.Step/time.Second)
+	occuPdpSt := timestamp.Unix() - occuPdpAge
 
 	var preInt float64
 	var postInt float64
-	if occu_pdp_st > proc_pdp_st {
-		preInt = float64(occu_pdp_st - r.LastUpdate.Unix())
+	if occuPdpSt > procPdpSt {
+		preInt = float64(occuPdpSt - r.LastUpdate.Unix())
 		preInt -= float64(r.LastUpdate.Nanosecond()) / 1e9
-		postInt = float64(occu_pdp_age)
+		postInt = float64(occuPdpAge)
 		postInt += float64(timestamp.Nanosecond()) / 1e9
 	} else {
 		preInt = interval
 		postInt = 0
 	}
 
-	procPdpCount := proc_pdp_st / int64(r.Step/time.Second)
+	procPdpCount := procPdpSt / int64(r.Step/time.Second)
 
-	return uint64(occu_pdp_st-proc_pdp_st) / uint64(r.Step/time.Second), preInt, postInt, uint64(procPdpCount)
+	return uint64(occuPdpSt-procPdpSt) / uint64(r.Step/time.Second), preInt, postInt, uint64(procPdpCount)
 }
 
 func (r *Rrd) simpleUpdate(newPdps []float64, interval float64) error {
@@ -107,12 +110,18 @@ func (r *Rrd) updateAllCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount ui
 }
 
 func (r *Rrd) updateAberrantCdps(pdpTemp []float64, elapsedSteps uint64) error {
+	first := true
 	for j := elapsedSteps; j > 0 && j < 3; j-- {
 		for _, rra := range r.Rras {
-			if err := rra.UpdateAberantCdp(pdpTemp); err != nil {
+			if err := rra.UpdateAberantCdp(pdpTemp, first); err != nil {
 				return nil
 			}
 		}
+		first = false
 	}
+	return nil
+}
+
+func (r *Rrd) writeToRras() error {
 	return nil
 }
