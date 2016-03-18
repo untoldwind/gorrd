@@ -1,21 +1,39 @@
 package cdata
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	"github.com/leanovate/gopter"
+	"github.com/leanovate/gopter/gen"
+	"github.com/leanovate/gopter/prop"
 )
 
 func TestUnival(t *testing.T) {
-	Convey("Unival from uint64", t, func() {
-		val := unival(123456)
+	properties := gopter.NewProperties(nil)
 
-		So(val.AsLong(), ShouldEqual, 123456)
-		So(val.AsUnsignedLong(), ShouldEqual, 123456)
-	})
+	properties.Property("Unival from uint64", prop.ForAll(
+		func(i uint64) bool {
+			val := unival(i)
 
-	Convey("Unival from float64", t, func() {
-		val := univalForDouble(1234.678)
+			return val.AsUnsignedLong() == i
+		},
+		gen.UInt64()))
 
-		So(val.AsDouble(), ShouldEqual, 1234.678)
-	})
+	properties.Property("Unival from int64", prop.ForAll(
+		func(i int64) bool {
+			val := unival(i)
+
+			return val.AsLong() == i
+		},
+		gen.Int64()))
+
+	properties.Property("Unival from float64", prop.ForAll(
+		func(f float64) bool {
+			val := univalForDouble(f)
+
+			return val.AsDouble() == f
+		},
+		gen.Float64()))
+
+	properties.TestingRun(t)
 }
