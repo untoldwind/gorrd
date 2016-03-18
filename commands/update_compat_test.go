@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -15,7 +14,7 @@ import (
 )
 
 func TestUpdateCompatibility(t *testing.T) {
-	rrdtool, err := exec.LookPath("rrdtool")
+	rrdtool, err := findRrdTool()
 
 	if err != nil {
 		t.Skipf("rrdtool not found: %s", err.Error())
@@ -27,17 +26,13 @@ func TestUpdateCompatibility(t *testing.T) {
 		rrdFileName := filepath.Join(tempDir, fmt.Sprintf("comp_update-%s.rrd", time.Now().String()))
 		defer os.Remove(rrdFileName)
 
-		cmd := exec.Command(rrdtool,
-			"create",
+		So(rrdtool.create(
 			rrdFileName,
-			"--start", "1455218381",
-			"--step", "300",
+			"1455218381",
+			"300",
 			"DS:watts:GAUGE:300:0:100000",
-			"RRA:AVERAGE:0.5:12:24")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		So(cmd.Run(), ShouldBeNil)
+			"RRA:AVERAGE:0.5:12:24",
+		), ShouldBeNil)
 
 		Convey("When values are added within stepsize", func() {
 			rrdFileNameCopy := filepath.Join(tempDir, fmt.Sprintf("comp_update-copy-%s.rrd", time.Now().String()))
@@ -45,14 +40,10 @@ func TestUpdateCompatibility(t *testing.T) {
 
 			for i := 1; i < 5; i++ {
 				copyFile(rrdFileName, rrdFileNameCopy)
-				cmd := exec.Command(rrdtool,
-					"update",
+				So(rrdtool.update(
 					rrdFileName,
-					fmt.Sprintf("%d:%d", i+1455218381, i*100+5))
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-
-				So(cmd.Run(), ShouldBeNil)
+					fmt.Sprintf("%d:%d", i+1455218381, i*100+5),
+				), ShouldBeNil)
 
 				flags := flag.NewFlagSet("gorrd", flag.ContinueOnError)
 				flags.Parse([]string{rrdFileNameCopy, fmt.Sprintf("%d:%d", i+1455218381, i*100+5)})

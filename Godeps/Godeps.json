@@ -7,8 +7,8 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.9.0-15-g219c8cb",
-			"Rev": "219c8cb75c258c552e999735be6df753ffc7afdc"
+			"Comment": "v0.9.0-17-ga26f435",
+			"Rev": "a26f43589d737684363ff856c5a0f9f24b946510"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
@@ -30,15 +30,15 @@
 		},
 		{
 			"ImportPath": "github.com/leanovate/gopter",
-			"Rev": "955d61347616de00684a128fdc9f92de5f7b7c69"
+			"Rev": "95106c10214ef774072ec0b672f0284f58b17654"
 		},
 		{
 			"ImportPath": "github.com/leanovate/gopter/gen",
-			"Rev": "955d61347616de00684a128fdc9f92de5f7b7c69"
+			"Rev": "95106c10214ef774072ec0b672f0284f58b17654"
 		},
 		{
 			"ImportPath": "github.com/leanovate/gopter/prop",
-			"Rev": "955d61347616de00684a128fdc9f92de5f7b7c69"
+			"Rev": "95106c10214ef774072ec0b672f0284f58b17654"
 		},
 		{
 			"ImportPath": "github.com/smartystreets/assertions",

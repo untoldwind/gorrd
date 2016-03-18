@@ -15,5 +15,6 @@ type Store interface {
 	StoreLastUpdate(lastUpdate time.Time) error
 
 	RowIterator(rraIndex int) (RraRowIterator, error)
+	StoreRow(rraIndex int, row []float64) error
 	Close()
 }

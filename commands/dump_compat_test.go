@@ -5,67 +5,85 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/codegangsta/cli"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/leanovate/gopter"
+	"github.com/leanovate/gopter/gen"
+	"github.com/leanovate/gopter/prop"
 	"github.com/untoldwind/gorrd/commands"
 )
 
 func TestDumpCompatibility(t *testing.T) {
-	rrdtool, err := exec.LookPath("rrdtool")
+	rrdtool, err := findRrdTool()
 
 	if err != nil {
 		t.Skipf("rrdtool not found: %s", err.Error())
 		return
 	}
-	Convey("Given minimal rrdfile with 1s step", t, func() {
-		tempDir := os.TempDir()
-		rrdFileName := filepath.Join(tempDir, fmt.Sprintf("comp_update-%s.rrd", time.Now().String()))
-		defer os.Remove(rrdFileName)
 
-		cmd := exec.Command(rrdtool,
-			"create",
-			rrdFileName,
-			"--start", "1455218381",
-			"--step", "1",
-			"DS:watts:GAUGE:300:0:100000",
-			"RRA:AVERAGE:0.5:5:3600")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+	runDumpCommand := func(rrdFileName string) (map[string]string, error) {
+		pipeReader, pipeWriter := io.Pipe()
+		go func() {
+			flags := flag.NewFlagSet("gorrd", flag.ContinueOnError)
+			flags.Parse([]string{rrdFileName})
+			ctx := cli.NewContext(&cli.App{
+				Writer: pipeWriter,
+			}, flags, nil)
+			commands.DumpCommand.Action(ctx)
+			pipeWriter.Close()
+		}()
 
-		So(cmd.Run(), ShouldBeNil)
+		return flattenXml(pipeReader)
+	}
 
-		Convey("Then dump produces the same result", func() {
-			cmd := exec.Command(rrdtool, "dump", rrdFileName)
-			stdout, err := cmd.StdoutPipe()
+	tempDir := os.TempDir()
+	parameters := gopter.DefaultTestParameters()
+	parameters.MinSuccessfulTests = 10
+	properties := gopter.NewProperties(parameters)
 
-			So(err, ShouldBeNil)
+	minGauge, maxGauge := 0, 100000
+	rrdStart := 1455218381
+	properties.Property("dump of single gauge is compatile", prop.ForAll(
+		func(values []int) (bool, error) {
+			rrdFileName := filepath.Join(tempDir, fmt.Sprintf("comp_update-%s-%d.rrd", time.Now().String(), rrdStart))
+			defer os.Remove(rrdFileName)
 
-			cmd.Start()
-			expectedResult, err := flattenXml(stdout)
+			rrdStart++
+			if err := rrdtool.create(rrdFileName,
+				strconv.Itoa(rrdStart),
+				"1",
+				fmt.Sprintf("DS:watts:GAUGE:300:%d:%d", minGauge, maxGauge),
+				"RRA:AVERAGE:0.5:1:100",
+			); err != nil {
+				return false, err
+			}
 
-			So(err, ShouldBeNil)
+			updates := make([]string, len(values))
+			for i, value := range values {
+				updates[i] = fmt.Sprintf("%d:%d", rrdStart+i+1, value)
+			}
+			rrdtool.update(rrdFileName, updates...)
 
-			pipeReader, pipeWriter := io.Pipe()
-			go func() {
-				flags := flag.NewFlagSet("gorrd", flag.ContinueOnError)
-				flags.Parse([]string{rrdFileName})
-				ctx := cli.NewContext(&cli.App{
-					Writer: pipeWriter,
-				}, flags, nil)
-				commands.DumpCommand.Action(ctx)
-				pipeWriter.Close()
-			}()
+			expectedResult, err := rrdtool.dump(rrdFileName)
 
-			actualResult, err := flattenXml(pipeReader)
+			if err != nil {
+				return false, err
+			}
 
-			So(err, ShouldBeNil)
+			actualResult, err := runDumpCommand(rrdFileName)
 
-			So(actualResult, ShouldResemble, expectedResult)
-		})
-	})
+			if err != nil {
+				return false, err
+			}
+
+			return reflect.DeepEqual(expectedResult, actualResult), nil
+		},
+		gen.SliceOf(gen.IntRange(minGauge, maxGauge))))
+
+	properties.TestingRun(t)
 }

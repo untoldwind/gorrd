@@ -8,8 +8,69 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
 )
+
+type rrdTool string
+
+func findRrdTool() (rrdTool, error) {
+	rrdExec, err := exec.LookPath("rrdtool")
+
+	if err != nil {
+		return "", err
+	}
+	return rrdTool(rrdExec), nil
+}
+
+func (r rrdTool) create(rrdFileName, start, step string, args ...string) error {
+	createArgs := make([]string, 0, len(args)+6)
+	createArgs = append(createArgs, "create")
+	createArgs = append(createArgs, rrdFileName)
+	createArgs = append(createArgs, "--start")
+	createArgs = append(createArgs, start)
+	createArgs = append(createArgs, "--step")
+	createArgs = append(createArgs, step)
+	createArgs = append(createArgs, args...)
+
+	cmd := exec.Command(string(r), createArgs...)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
+}
+
+func (r rrdTool) update(rrdFileName string, updates ...string) error {
+	if len(updates) == 0 {
+		return nil
+	}
+	updateArgs := make([]string, 0, len(updates)+2)
+	updateArgs = append(updateArgs, "update")
+	updateArgs = append(updateArgs, rrdFileName)
+	updateArgs = append(updateArgs, updates...)
+
+	cmd := exec.Command(string(r), updateArgs...)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
+}
+
+func (r rrdTool) dump(rrdFileName string) (map[string]string, error) {
+	cmd := exec.Command(string(r), "dump", rrdFileName)
+	cmd.Stderr = os.Stderr
+
+	stdout, err := cmd.StdoutPipe()
+
+	if err != nil {
+		return nil, err
+	}
+
+	cmd.Start()
+	return flattenXml(stdout)
+}
 
 type elementRef struct {
 	name  string
