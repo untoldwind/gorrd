@@ -3,7 +3,8 @@ package rrd
 type Rra interface {
 	GetRowCount() uint64
 	GetPdpPerRow() uint64
-	UpdateCdp(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error
+	UpdateCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error
+	UpdateAberantCdp(pdpTemp []float64) error
 	DumpTo(rrdStore Store, dumper DataOutput) error
 }
 
@@ -33,11 +34,13 @@ func (c *RraCpdPrepGeneric) DumpTo(dumper DataOutput) error {
 }
 
 type RraAbstractGeneric struct {
-	Index        int
-	RowCount     uint64              `rra:"rowCount"`
-	PdpPerRow    uint64              `rra:"pdpPerRow"`
-	XFilesFactor float64             `rra:"param0"`
-	CpdPreps     []RraCpdPrepGeneric `rra:"cpdPreps"`
+	Index                int
+	RowCount             uint64              `rra:"rowCount"`
+	PdpPerRow            uint64              `rra:"pdpPerRow"`
+	XFilesFactor         float64             `rra:"param0"`
+	CpdPreps             []RraCpdPrepGeneric `rra:"cpdPreps"`
+	ResetCpdsFunc        func(pdpTemp []float64) error
+	UpdateAberantCdpFunc func(pdpTemp []float64) error
 }
 
 func (r *RraAbstractGeneric) GetRowCount() uint64 {
@@ -48,7 +51,7 @@ func (r *RraAbstractGeneric) GetPdpPerRow() uint64 {
 	return r.PdpPerRow
 }
 
-func (r *RraAbstractGeneric) UpdateCdp(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error {
+func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error {
 	startPdpOffset := r.PdpPerRow - procPdpCount%r.PdpPerRow
 	var rraStepCount uint64
 	if startPdpOffset <= elapsedSteps {
@@ -59,9 +62,17 @@ func (r *RraAbstractGeneric) UpdateCdp(pdpTemp []float64, elapsedSteps, procPdpC
 
 		}
 	} else {
-		if elapsedSteps > 1 {
-
+		// There is just one PDP pre CDP
+		if elapsedSteps > 2 {
+			return r.ResetCpdsFunc(pdpTemp)
 		}
+	}
+	return nil
+}
+
+func (r *RraAbstractGeneric) UpdateAberantCdp(pdpTemp []float64) error {
+	if r.UpdateAberantCdpFunc != nil {
+		return r.UpdateAberantCdpFunc(pdpTemp)
 	}
 	return nil
 }

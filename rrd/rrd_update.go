@@ -28,7 +28,10 @@ func (r *Rrd) Update(timestamp time.Time, values []string) error {
 		if err != nil {
 			return err
 		}
-		if err := r.updateAllCdpPrep(pdpTemp, elapsedSteps, procPdpCount); err != nil {
+		if err := r.updateAllCdpPreps(pdpTemp, elapsedSteps, procPdpCount); err != nil {
+			return err
+		}
+		if err := r.updateAberrantCdps(pdpTemp, elapsedSteps); err != nil {
 			return err
 		}
 	}
@@ -94,10 +97,21 @@ func (r *Rrd) processAllPdp(newPdps []float64, elapsedSteps, procPdpCount uint64
 	return pdpTemp, nil
 }
 
-func (r *Rrd) updateAllCdpPrep(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error {
+func (r *Rrd) updateAllCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error {
 	for _, rra := range r.Rras {
-		if err := rra.UpdateCdp(pdpTemp, elapsedSteps, procPdpCount); err != nil {
+		if err := rra.UpdateCdpPreps(pdpTemp, elapsedSteps, procPdpCount); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func (r *Rrd) updateAberrantCdps(pdpTemp []float64, elapsedSteps uint64) error {
+	for j := elapsedSteps; j > 0 && j < 3; j-- {
+		for _, rra := range r.Rras {
+			if err := rra.UpdateAberantCdp(pdpTemp); err != nil {
+				return nil
+			}
 		}
 	}
 	return nil
