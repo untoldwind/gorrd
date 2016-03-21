@@ -15,11 +15,11 @@ type DatasourceDCounter struct {
 
 func (d *DatasourceDCounter) CalculatePdpPrep(newValue string, interval float64) (float64, error) {
 	if float64(d.Heartbeat) < interval {
-		d.LastValue = "U"
+		d.LastValue = Undefined
 	}
 	rate := math.NaN()
 	newPdp := math.NaN()
-	if newValue != "U" && float64(d.Heartbeat) >= interval {
+	if newValue != Undefined && float64(d.Heartbeat) >= interval {
 		newval, err := strconv.ParseFloat(newValue, 64)
 		if err != nil {
 			return math.NaN(), errors.Wrap(err, 0)

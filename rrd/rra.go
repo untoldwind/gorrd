@@ -3,7 +3,7 @@ package rrd
 type Rra interface {
 	GetRowCount() uint64
 	GetPdpPerRow() uint64
-	UpdateCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error
+	UpdateCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) (uint64, error)
 	UpdateAberantCdp(pdpTemp []float64, first bool) error
 	DumpTo(rrdStore Store, dumper DataOutput) error
 }
@@ -51,7 +51,7 @@ func (r *RraAbstractGeneric) GetPdpPerRow() uint64 {
 	return r.PdpPerRow
 }
 
-func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error {
+func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) (uint64, error) {
 	startPdpOffset := r.PdpPerRow - procPdpCount%r.PdpPerRow
 	var rraStepCount uint64
 	if startPdpOffset <= elapsedSteps {
@@ -64,10 +64,10 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, pro
 	} else {
 		// There is just one PDP pre CDP
 		if elapsedSteps > 2 {
-			return r.ResetCpdsFunc(pdpTemp)
+			return rraStepCount, r.ResetCpdsFunc(pdpTemp)
 		}
 	}
-	return nil
+	return rraStepCount, nil
 }
 
 func (r *RraAbstractGeneric) UpdateAberantCdp(pdpTemp []float64, first bool) error {

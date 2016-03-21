@@ -28,13 +28,25 @@ func (r *Rrd) Update(timestamp time.Time, values []string) error {
 		if err != nil {
 			return err
 		}
-		if err := r.updateAllCdpPreps(pdpTemp, elapsedSteps, procPdpCount); err != nil {
+		rraStepCounts, err := r.updateAllCdpPreps(pdpTemp, elapsedSteps, procPdpCount)
+		if err != nil {
 			return err
 		}
 		if err := r.updateAberrantCdps(pdpTemp, elapsedSteps); err != nil {
 			return err
 		}
-		if err := r.writeToRras(); err != nil {
+		if err := r.writeToRras(rraStepCounts); err != nil {
+			return err
+		}
+		for i, rra := range r.Rras {
+			if err := r.Store.StoreRraParams(i, rra); err != nil {
+				return err
+			}
+		}
+
+	}
+	for i, datasource := range r.Datasources {
+		if err := r.Store.StoreDatasourceParams(i, datasource); err != nil {
 			return err
 		}
 	}
@@ -84,11 +96,6 @@ func (r *Rrd) simpleUpdate(newPdps []float64, interval float64) error {
 		r.Datasources[i].UpdatePdp(newPdp, interval)
 	}
 
-	for i, datasource := range r.Datasources {
-		if err := r.Store.StoreDatasourceParams(i, datasource); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -100,13 +107,16 @@ func (r *Rrd) processAllPdp(newPdps []float64, elapsedSteps, procPdpCount uint64
 	return pdpTemp, nil
 }
 
-func (r *Rrd) updateAllCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) error {
-	for _, rra := range r.Rras {
-		if err := rra.UpdateCdpPreps(pdpTemp, elapsedSteps, procPdpCount); err != nil {
-			return err
+func (r *Rrd) updateAllCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) ([]uint64, error) {
+	rraStepCounts := make([]uint64, len(r.Rras))
+	var err error
+	for i, rra := range r.Rras {
+		rraStepCounts[i], err = rra.UpdateCdpPreps(pdpTemp, elapsedSteps, procPdpCount)
+		if err != nil {
+			return nil, err
 		}
 	}
-	return nil
+	return rraStepCounts, nil
 }
 
 func (r *Rrd) updateAberrantCdps(pdpTemp []float64, elapsedSteps uint64) error {
@@ -122,6 +132,6 @@ func (r *Rrd) updateAberrantCdps(pdpTemp []float64, elapsedSteps uint64) error {
 	return nil
 }
 
-func (r *Rrd) writeToRras() error {
+func (r *Rrd) writeToRras(rraStepCounts []uint64) error {
 	return nil
 }

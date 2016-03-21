@@ -16,12 +16,12 @@ type DatasourceDerive struct {
 
 func (d *DatasourceDerive) UpdatePdCalculatePdpPreppPrep(newValue string, interval float64) (float64, error) {
 	if float64(d.Heartbeat) < interval {
-		d.LastValue = "U"
+		d.LastValue = Undefined
 	}
 
 	rate := math.NaN()
 	newPdp := math.NaN()
-	if newValue != "U" && float64(d.Heartbeat) >= interval {
+	if newValue != Undefined && float64(d.Heartbeat) >= interval {
 		newInt := new(big.Int)
 		_, err := fmt.Sscan(newValue, newInt)
 		if err != nil {

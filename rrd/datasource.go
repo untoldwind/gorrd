@@ -7,6 +7,8 @@ import (
 	"github.com/go-errors/errors"
 )
 
+const Undefined = "U"
+
 type Datasource interface {
 	GetName() string
 	GetLastValue() string
