@@ -16,9 +16,7 @@ func (f *RrdRawFile) StoreRraPtrs() error {
 	if !f.rraPtrsChanged {
 		return nil
 	}
-	writer := f.dataFile.Writer(f.baseHeaderSize + rrdRawLiveHeaderSize +
-		rrdRawPdpPrepSize*f.header.datasourceCount +
-		rrdRawCdpPrepSize*f.header.datasourceCount*f.header.rraCount)
+	writer := f.dataFile.Writer(f.headerSize - f.header.rraCount*f.dataFile.ValueSize())
 
 	for _, rraPtr := range f.rraPtrs {
 		if err := writer.WriteUnsignedLong(rraPtr); err != nil {

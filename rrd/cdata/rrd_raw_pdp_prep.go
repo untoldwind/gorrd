@@ -5,7 +5,7 @@ type rrdPdpPrep struct {
 	scratch             []unival
 }
 
-const rrdRawPdpPrepSize = 30 + 8*10
+const rrdRawPdpPrepSize = 32 + 8*10
 
 func (f *RrdRawFile) readPdpPreps(reader *CDataReader) error {
 	f.pdpPreps = make([]*rrdPdpPrep, f.header.datasourceCount)

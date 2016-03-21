@@ -127,6 +127,16 @@ func (r *Rrd) updateAberrantCdps(pdpTemp []float64, elapsedSteps uint64) error {
 }
 
 func (r *Rrd) writeToRras(rraStepCounts []uint64) error {
+	for i, rra := range r.Rras {
+		for first := true; rraStepCounts[i] > 0; rraStepCounts[i]-- {
+			if first {
+				r.Store.StoreRow(i, rra.GetPrimaryValues())
+			} else {
+				r.Store.StoreRow(i, rra.GetSecondaryValues())
+			}
+			first = false
+		}
+	}
 	return nil
 }
 

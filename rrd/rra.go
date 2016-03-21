@@ -3,6 +3,8 @@ package rrd
 type Rra interface {
 	GetRowCount() uint64
 	GetPdpPerRow() uint64
+	GetPrimaryValues() []float64
+	GetSecondaryValues() []float64
 	UpdateCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) (uint64, error)
 	UpdateAberantCdp(pdpTemp []float64, first bool) error
 	DumpTo(rrdStore Store, dumper DataOutput) error
@@ -49,6 +51,22 @@ func (r *RraAbstractGeneric) GetRowCount() uint64 {
 
 func (r *RraAbstractGeneric) GetPdpPerRow() uint64 {
 	return r.PdpPerRow
+}
+
+func (r *RraAbstractGeneric) GetPrimaryValues() []float64 {
+	result := make([]float64, len(r.CpdPreps))
+	for i, cpdPrep := range r.CpdPreps {
+		result[i] = cpdPrep.PrimaryValue
+	}
+	return result
+}
+
+func (r *RraAbstractGeneric) GetSecondaryValues() []float64 {
+	result := make([]float64, len(r.CpdPreps))
+	for i, cpdPrep := range r.CpdPreps {
+		result[i] = cpdPrep.SecondaryValue
+	}
+	return result
 }
 
 func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) (uint64, error) {

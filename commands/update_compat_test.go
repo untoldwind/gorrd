@@ -58,7 +58,7 @@ func TestUpdateCompatibility(t *testing.T) {
 
 				runUpdateCommand(rrdFileNameCopy, fmt.Sprintf("%d:%d", 300*i+start, i*100+5))
 
-				//				So(rrdFileNameCopy, shouldHaveSameContentAs, rrdFileName)
+				//			So(rrdFileNameCopy, shouldHaveSameContentAs, rrdFileName)
 			}
 		})
 	})
