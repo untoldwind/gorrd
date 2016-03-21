@@ -46,10 +46,10 @@ func TestUpdateCompatibility(t *testing.T) {
 		), ShouldBeNil)
 
 		Convey("When values are added in stepsize", func() {
-			rrdFileNameCopy := filepath.Join(tempDir, fmt.Sprintf("comp_update-copy-%d.rrd", time.Now().UnixNano()))
+			rrdFileNameCopy := filepath.Join(tempDir, fmt.Sprintf("comp_update1-copy-%d.rrd", time.Now().UnixNano()))
 			defer os.Remove(rrdFileNameCopy)
 
-			for i := 1; i < 5; i++ {
+			for i := 1; i < 2; i++ {
 				copyFile(rrdFileName, rrdFileNameCopy)
 				So(rrdtool.update(
 					rrdFileName,

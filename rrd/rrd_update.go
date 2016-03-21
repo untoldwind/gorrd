@@ -43,15 +43,9 @@ func (r *Rrd) Update(timestamp time.Time, values []string) error {
 				return err
 			}
 		}
-
-	}
-	for i, datasource := range r.Datasources {
-		if err := r.Store.StoreDatasourceParams(i, datasource); err != nil {
-			return err
-		}
 	}
 
-	return r.Store.StoreLastUpdate(timestamp)
+	return r.writeChanges(timestamp)
 }
 
 func (r *Rrd) calculatePdpPreps(interval float64, values []string) ([]float64, error) {
@@ -134,4 +128,17 @@ func (r *Rrd) updateAberrantCdps(pdpTemp []float64, elapsedSteps uint64) error {
 
 func (r *Rrd) writeToRras(rraStepCounts []uint64) error {
 	return nil
+}
+
+func (r *Rrd) writeChanges(timestamp time.Time) error {
+	if err := r.Store.StoreLastUpdate(timestamp); err != nil {
+		return err
+	}
+
+	for i, datasource := range r.Datasources {
+		if err := r.Store.StoreDatasourceParams(i, datasource); err != nil {
+			return err
+		}
+	}
+	return r.Store.StoreRraPtrs()
 }

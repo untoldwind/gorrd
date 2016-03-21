@@ -26,8 +26,9 @@ type RrdRawFile struct {
 	pdpPreps []*rrdPdpPrep
 	cdpPreps [][]*rrdCdpPrep
 
-	rraPtrs   []uint64
-	rraStarts []uint64
+	rraPtrsChanged bool
+	rraPtrs        []uint64
+	rraStarts      []uint64
 }
 
 func OpenRrdRawFile(name string, readOnly bool) (*rrd.Rrd, error) {

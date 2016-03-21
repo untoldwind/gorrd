@@ -62,7 +62,7 @@ func (d *DatasourceAbstract) ProcessPdp(pdpValue, interval, preInt, postInt floa
 	}
 	var pdpTemp float64
 
-	if interval > float64(d.Heartbeat) || uint64(step/2) < d.UnknownSecCount {
+	if interval > float64(d.Heartbeat) || uint64(step/time.Second/2) < d.UnknownSecCount {
 		pdpTemp = math.NaN()
 	} else {
 		diffPdpSteps := (elapsedSteps * uint64(step)) / uint64(time.Second)

@@ -4,6 +4,8 @@ type rrdCdpPrep struct {
 	scratch []unival
 }
 
+const rrdRawCdpPrepSize = 10 * 8
+
 func (f *RrdRawFile) readCdpPreps(reader *CDataReader) error {
 	f.cdpPreps = make([][]*rrdCdpPrep, f.header.rraCount)
 
@@ -31,7 +33,8 @@ func (f *RrdRawFile) readCdpPrep(reader *CDataReader) (*rrdCdpPrep, error) {
 }
 
 func (f *RrdRawFile) storeCdpPreps() error {
-	writer := f.dataFile.Writer(f.baseHeaderSize + rrdRawLiveHeaderSize + rrdRawPdpPrepSize*f.header.datasourceCount)
+	writer := f.dataFile.Writer(f.baseHeaderSize + rrdRawLiveHeaderSize +
+		rrdRawPdpPrepSize*f.header.datasourceCount)
 
 	for _, cdpPreps := range f.cdpPreps {
 		for _, cdpPrep := range cdpPreps {
