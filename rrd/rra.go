@@ -41,8 +41,8 @@ type RraAbstractGeneric struct {
 	PdpPerRow            uint64              `rra:"pdpPerRow"`
 	XFilesFactor         float64             `rra:"param0"`
 	CpdPreps             []RraCpdPrepGeneric `rra:"cpdPreps"`
-	ResetCpdsFunc        func(pdpTemp []float64) error
-	UpdateAberantCdpFunc func(pdpTemp []float64) error
+	ResetCpdFunc         func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric) error
+	UpdateAberantCdpFunc func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric) error
 }
 
 func (r *RraAbstractGeneric) GetRowCount() uint64 {
@@ -82,26 +82,32 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, pro
 	} else {
 		// There is just one PDP pre CDP
 		if elapsedSteps > 2 {
-			return rraStepCount, r.ResetCpdsFunc(pdpTemp)
+			for i, pdp := range pdpTemp {
+				if err := r.ResetCpdFunc(pdp, &r.CpdPreps[i]); err != nil {
+					return 0, err
+				}
+			}
+			return rraStepCount, nil
 		}
 	}
 	return rraStepCount, nil
 }
 
 func (r *RraAbstractGeneric) UpdateAberantCdp(pdpTemp []float64, first bool) error {
-	if first {
-		for i, pdp := range pdpTemp {
+	for i, pdp := range pdpTemp {
+		if first {
 			r.CpdPreps[i].PrimaryValue = pdp
-		}
-	} else {
-		for i, pdp := range pdpTemp {
+		} else {
 			r.CpdPreps[i].SecondaryValue = pdp
+
+		}
+		if r.UpdateAberantCdpFunc != nil {
+			if err := r.UpdateAberantCdpFunc(pdp, &r.CpdPreps[i]); err != nil {
+				return err
+			}
 		}
 	}
 
-	if r.UpdateAberantCdpFunc != nil {
-		return r.UpdateAberantCdpFunc(pdpTemp)
-	}
 	return nil
 }
 
