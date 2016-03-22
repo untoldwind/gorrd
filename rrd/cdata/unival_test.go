@@ -1,11 +1,13 @@
 package cdata
 
 import (
+	"math"
 	"testing"
 
 	"github.com/leanovate/gopter"
 	"github.com/leanovate/gopter/gen"
 	"github.com/leanovate/gopter/prop"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestUnival(t *testing.T) {
@@ -36,4 +38,13 @@ func TestUnival(t *testing.T) {
 		gen.Float64()))
 
 	properties.TestingRun(t)
+}
+
+func TestCompatibleNaN(t *testing.T) {
+	Convey("Compatible NaN", t, func() {
+		nan := univalForDouble(math.NaN())
+
+		So(math.IsNaN(nan.AsDouble()), ShouldBeTrue)
+		So(nan.AsUnsignedLong(), ShouldEqual, 0x7FF8000000000000)
+	})
 }

@@ -1,6 +1,11 @@
 package cdata
 
-import "unsafe"
+import (
+	"math"
+	"unsafe"
+)
+
+const rrdNaNBits = 0x7FF8000000000000
 
 type unival uint64
 
@@ -21,5 +26,8 @@ func univalForUnsignedLong(val uint64) unival {
 }
 
 func univalForDouble(val float64) unival {
+	if math.IsNaN(val) {
+		return unival(rrdNaNBits)
+	}
 	return *(*unival)(unsafe.Pointer(&val))
 }

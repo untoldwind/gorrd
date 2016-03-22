@@ -1,10 +1,6 @@
 package cdata
 
-import (
-	"math"
-
-	"github.com/go-errors/errors"
-)
+import "github.com/go-errors/errors"
 
 type CDataWriter struct {
 	*CDataFile
@@ -46,7 +42,7 @@ func (f *CDataWriter) WriteUnivals(univals []unival) error {
 }
 
 func (f *CDataWriter) WriteDouble(val float64) error {
-	return f.WriteUnsignedLong(math.Float64bits(val))
+	return f.WriteUnival(univalForDouble(val))
 }
 
 func (f *CDataWriter) WriteUnsignedLong(val uint64) error {
