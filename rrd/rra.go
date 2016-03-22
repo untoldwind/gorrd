@@ -1,5 +1,7 @@
 package rrd
 
+import "math"
+
 type Rra interface {
 	GetRowCount() uint64
 	GetPdpPerRow() uint64
@@ -36,13 +38,15 @@ func (c *RraCpdPrepGeneric) DumpTo(dumper DataOutput) error {
 }
 
 type RraAbstractGeneric struct {
-	Index                int
-	RowCount             uint64              `rra:"rowCount"`
-	PdpPerRow            uint64              `rra:"pdpPerRow"`
-	XFilesFactor         float64             `rra:"param0"`
-	CpdPreps             []RraCpdPrepGeneric `rra:"cpdPreps"`
-	ResetCpdFunc         func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric) error
-	UpdateAberantCdpFunc func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric) error
+	Index                   int
+	RowCount                uint64              `rra:"rowCount"`
+	PdpPerRow               uint64              `rra:"pdpPerRow"`
+	XFilesFactor            float64             `rra:"param0"`
+	CpdPreps                []RraCpdPrepGeneric `rra:"cpdPreps"`
+	ResetCpdFunc            func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric) error
+	UpdateAberantCdpFunc    func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric) error
+	InitializeCdpFunc       func(pdpTemp float64, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) error
+	InitializeCarryOverFunc func(pdpTemp float64, elapsedPdpSt, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) (float64, error)
 }
 
 func (r *RraAbstractGeneric) GetRowCount() uint64 {
@@ -77,7 +81,20 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, pro
 	}
 	if r.PdpPerRow > 1 {
 		if rraStepCount > 0 {
+			for i, pdp := range pdpTemp {
+				if math.IsNaN(pdp) {
+					r.CpdPreps[i].UnknownDatapoints += startPdpOffset
+					r.CpdPreps[i].SecondaryValue = math.NaN()
+				} else {
+					r.CpdPreps[i].SecondaryValue = pdp
+				}
 
+				if float64(r.CpdPreps[i].UnknownDatapoints) > float64(r.PdpPerRow)*r.XFilesFactor {
+					r.CpdPreps[i].PrimaryValue = math.NaN()
+				} else {
+					r.InitializeCdpFunc(pdp, r.PdpPerRow, startPdpOffset, &r.CpdPreps[i])
+				}
+			}
 		}
 	} else {
 		// There is just one PDP pre CDP
@@ -99,7 +116,6 @@ func (r *RraAbstractGeneric) UpdateAberantCdp(pdpTemp []float64, first bool) err
 			r.CpdPreps[i].PrimaryValue = pdp
 		} else {
 			r.CpdPreps[i].SecondaryValue = pdp
-
 		}
 		if r.UpdateAberantCdpFunc != nil {
 			if err := r.UpdateAberantCdpFunc(pdp, &r.CpdPreps[i]); err != nil {
