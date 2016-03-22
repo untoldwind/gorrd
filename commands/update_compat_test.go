@@ -49,7 +49,7 @@ func TestUpdateCompatibility(t *testing.T) {
 			rrdFileNameCopy := filepath.Join(tempDir, fmt.Sprintf("comp_update1-copy-%d.rrd", time.Now().UnixNano()))
 			defer os.Remove(rrdFileNameCopy)
 
-			for i := 1; i < 2; i++ {
+			for i := 1; i < 10; i++ {
 				copyFile(rrdFileName, rrdFileNameCopy)
 				So(rrdtool.update(
 					rrdFileName,
