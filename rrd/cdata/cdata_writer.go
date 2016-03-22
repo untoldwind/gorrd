@@ -33,16 +33,27 @@ func (f *CDataWriter) WriteUnival(val unival) error {
 }
 
 func (f *CDataWriter) WriteUnivals(univals []unival) error {
-	for _, val := range univals {
-		if err := f.WriteUnsignedLong(val.AsUnsignedLong()); err != nil {
-			return err
-		}
+	f.alignOffset()
+	data := make([]byte, 8*len(univals))
+
+	for i, val := range univals {
+		f.byteOrder.PutUint64(data[i*8:i*8+8], val.AsUnsignedLong())
 	}
-	return nil
+	return f.WriteBytes(data)
 }
 
 func (f *CDataWriter) WriteDouble(val float64) error {
 	return f.WriteUnival(univalForDouble(val))
+}
+
+func (f *CDataWriter) WriteDoubles(vals []float64) error {
+	f.alignOffset()
+	data := make([]byte, 8*len(vals))
+
+	for i, val := range vals {
+		f.byteOrder.PutUint64(data[i*8:i*8+8], univalForDouble(val).AsUnsignedLong())
+	}
+	return f.WriteBytes(data)
 }
 
 func (f *CDataWriter) WriteUnsignedLong(val uint64) error {
