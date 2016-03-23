@@ -31,55 +31,6 @@ func TestUpdateCompatibility(t *testing.T) {
 		commands.UpdateCommand.Action(ctx)
 	}
 
-	Convey("Given minimal rrdfile with 5m step and 1 pdp per cdp", t, func() {
-		tempDir := os.TempDir()
-		rrdFileName := filepath.Join(tempDir, fmt.Sprintf("comp_update1-%d.rrd", time.Now().UnixNano()))
-		defer os.Remove(rrdFileName)
-
-		start := 1455218381
-		So(rrdtool.create(
-			rrdFileName,
-			strconv.Itoa(start),
-			"300",
-			"DS:watts:GAUGE:300:0:100000",
-			"RRA:AVERAGE:0.5:1:24",
-		), ShouldBeNil)
-
-		Convey("When values are added in stepsize", func() {
-			rrdFileNameCopy := filepath.Join(tempDir, fmt.Sprintf("comp_update1-copy-%d.rrd", time.Now().UnixNano()))
-			defer os.Remove(rrdFileNameCopy)
-
-			for i := 1; i < 10; i++ {
-				copyFile(rrdFileName, rrdFileNameCopy)
-				So(rrdtool.update(
-					rrdFileName,
-					fmt.Sprintf("%d:%d", 300*i+start, i*100+5),
-				), ShouldBeNil)
-
-				runUpdateCommand(rrdFileNameCopy, fmt.Sprintf("%d:%d", 300*i+start, i*100+5))
-
-				So(rrdFileNameCopy, shouldHaveSameContentAs, rrdFileName)
-			}
-		})
-
-		Convey("When values are added above stepsize", func() {
-			rrdFileNameCopy := filepath.Join(tempDir, fmt.Sprintf("comp_update1-copy-%d.rrd", time.Now().UnixNano()))
-			defer os.Remove(rrdFileNameCopy)
-
-			for i := 1; i < 10; i++ {
-				copyFile(rrdFileName, rrdFileNameCopy)
-				So(rrdtool.update(
-					rrdFileName,
-					fmt.Sprintf("%d:%d", 400*i+start, i*100+5),
-				), ShouldBeNil)
-
-				runUpdateCommand(rrdFileNameCopy, fmt.Sprintf("%d:%d", 400*i+start, i*100+5))
-
-				So(rrdFileNameCopy, shouldHaveSameContentAs, rrdFileName)
-			}
-		})
-	})
-
 	Convey("Given minimal rrdfile with 5m step", t, func() {
 		tempDir := os.TempDir()
 		rrdFileName := filepath.Join(tempDir, fmt.Sprintf("comp_update-%d.rrd", time.Now().UnixNano()))
