@@ -6,15 +6,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/codegangsta/cli"
-	"github.com/leanovate/gopter"
-	"github.com/leanovate/gopter/gen"
-	"github.com/leanovate/gopter/prop"
+	. "github.com/smartystreets/goconvey/convey"
 	"github.com/untoldwind/gorrd/commands"
 )
 
@@ -41,49 +38,28 @@ func TestDumpCompatibility(t *testing.T) {
 		return flattenXml(pipeReader)
 	}
 
-	tempDir := os.TempDir()
-	parameters := gopter.DefaultTestParameters()
-	parameters.MinSuccessfulTests = 10
-	properties := gopter.NewProperties(parameters)
+	Convey("Given minimal rrdfile with 5m step", t, func() {
+		tempDir := os.TempDir()
+		rrdFileName := filepath.Join(tempDir, fmt.Sprintf("comp_update1-%d.rrd", time.Now().UnixNano()))
+		defer os.Remove(rrdFileName)
 
-	minGauge, maxGauge := 0, 100000
-	rrdStart := 1455218381
-	properties.Property("dump of single gauge is compatile", prop.ForAll(
-		func(values []int) (bool, error) {
-			rrdFileName := filepath.Join(tempDir, fmt.Sprintf("comp_update-%s-%d.rrd", time.Now().String(), rrdStart))
-			defer os.Remove(rrdFileName)
+		start := 1455218381
+		err := rrdtool.create(rrdFileName,
+			strconv.Itoa(start),
+			"1",
+			"DS:watts:GAUGE:300:0:100000",
+			"RRA:AVERAGE:0.5:1:100",
+		)
 
-			rrdStart++
-			if err := rrdtool.create(rrdFileName,
-				strconv.Itoa(rrdStart),
-				"1",
-				fmt.Sprintf("DS:watts:GAUGE:300:%d:%d", minGauge, maxGauge),
-				"RRA:AVERAGE:0.5:1:100",
-			); err != nil {
-				return false, err
-			}
+		So(err, ShouldBeNil)
 
-			updates := make([]string, len(values))
-			for i, value := range values {
-				updates[i] = fmt.Sprintf("%d:%d", rrdStart+i+1, value)
-			}
-			rrdtool.update(rrdFileName, updates...)
+		expectedResult, err := rrdtool.dump(rrdFileName)
 
-			expectedResult, err := rrdtool.dump(rrdFileName)
+		So(err, ShouldBeNil)
 
-			if err != nil {
-				return false, err
-			}
+		actualResult, err := runDumpCommand(rrdFileName)
 
-			actualResult, err := runDumpCommand(rrdFileName)
-
-			if err != nil {
-				return false, err
-			}
-
-			return reflect.DeepEqual(expectedResult, actualResult), nil
-		},
-		gen.SliceOf(gen.IntRange(minGauge, maxGauge))))
-
-	properties.TestingRun(t)
+		So(err, ShouldBeNil)
+		So(expectedResult, ShouldResemble, actualResult)
+	})
 }
