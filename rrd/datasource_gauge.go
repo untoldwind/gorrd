@@ -19,14 +19,18 @@ func (d *DatasourceGauge) CalculatePdpPrep(newValue string, interval float64) (f
 		return math.NaN(), errors.Wrap(err, 0)
 	}
 
+	d.LastValue = newValue
+
+	if float64(d.Heartbeat) < interval {
+		return math.NaN(), nil
+	}
+
 	newPdp := newval * interval
 	rate := newval
 
 	if !d.checkRateBounds(rate) {
 		newPdp = math.NaN()
 	}
-
-	d.LastValue = newValue
 
 	return newPdp, nil
 }

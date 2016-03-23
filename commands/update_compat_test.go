@@ -61,6 +61,23 @@ func TestUpdateCompatibility(t *testing.T) {
 				So(rrdFileNameCopy, shouldHaveSameContentAs, rrdFileName)
 			}
 		})
+
+		Convey("When values are added above stepsize", func() {
+			rrdFileNameCopy := filepath.Join(tempDir, fmt.Sprintf("comp_update1-copy-%d.rrd", time.Now().UnixNano()))
+			defer os.Remove(rrdFileNameCopy)
+
+			for i := 1; i < 10; i++ {
+				copyFile(rrdFileName, rrdFileNameCopy)
+				So(rrdtool.update(
+					rrdFileName,
+					fmt.Sprintf("%d:%d", 400*i+start, i*100+5),
+				), ShouldBeNil)
+
+				runUpdateCommand(rrdFileNameCopy, fmt.Sprintf("%d:%d", 400*i+start, i*100+5))
+
+				So(rrdFileNameCopy, shouldHaveSameContentAs, rrdFileName)
+			}
+		})
 	})
 
 	Convey("Given minimal rrdfile with 5m step", t, func() {

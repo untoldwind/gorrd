@@ -85,6 +85,10 @@ func (r *Rrd) calculateElapsedSteps(timestamp time.Time, interval float64) (uint
 	return uint64(occuPdpSt-procPdpSt) / uint64(r.Step/time.Second), preInt, postInt, uint64(procPdpCount)
 }
 
+func (r *Rrd) updatePdpPrep(newPdps []float64) error {
+	return nil
+}
+
 func (r *Rrd) simpleUpdate(newPdps []float64, interval float64) error {
 	for i, newPdp := range newPdps {
 		r.Datasources[i].UpdatePdp(newPdp, interval)
