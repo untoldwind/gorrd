@@ -62,28 +62,36 @@ func TestUpdateCompatibility(t *testing.T) {
 			}
 		})
 
-		Convey("When values are added above stepsize", func() {
+		Convey("When values are added with gaps", func() {
 			rrdFileNameCopy := filepath.Join(tempDir, fmt.Sprintf("comp_update1-copy-%d.rrd", time.Now().UnixNano()))
-			defer os.Remove(rrdFileNameCopy)
+			//			defer os.Remove(rrdFileNameCopy)
+			fmt.Println(rrdFileNameCopy)
 
-			for i := 1; i < 10; i++ {
+			timestamp := int64(start + 400)
+			for i := 0; i < 20; i++ {
 				copyFile(rrdFileName, rrdFileNameCopy)
 				So(rrdtool.update(
 					rrdFileName,
-					fmt.Sprintf("%d:%d", 400*i+start, i*100+5),
+					fmt.Sprintf("%d:%d", timestamp, i*100+5),
 				), ShouldBeNil)
 
-				err := runUpdateCommand(rrdFileNameCopy, time.Unix(int64(400*i+start), 0), strconv.Itoa(i*100+5))
+				err := runUpdateCommand(rrdFileNameCopy, time.Unix(timestamp, 0), strconv.Itoa(i*100+5))
 
 				So(err, ShouldBeNil)
 				So(rrdFileNameCopy, shouldHaveSameContentAs, rrdFileName)
+
+				if i%4 < 3 {
+					timestamp += 200
+				} else {
+					timestamp += 400
+				}
 			}
 		})
 	})
 
 	Convey("Given minimal rrdfile with 5m step", t, func() {
 		tempDir := os.TempDir()
-		rrdFileName := filepath.Join(tempDir, fmt.Sprintf("comp_update-%d.rrd", time.Now().UnixNano()))
+		rrdFileName := filepath.Join(tempDir, fmt.Sprintf("comp_update2-%d.rrd", time.Now().UnixNano()))
 		defer os.Remove(rrdFileName)
 
 		start := 1455218381
@@ -96,7 +104,7 @@ func TestUpdateCompatibility(t *testing.T) {
 		), ShouldBeNil)
 
 		Convey("When values are added within stepsize", func() {
-			rrdFileNameCopy := filepath.Join(tempDir, fmt.Sprintf("comp_update-copy-%d.rrd", time.Now().UnixNano()))
+			rrdFileNameCopy := filepath.Join(tempDir, fmt.Sprintf("comp_update2-copy-%d.rrd", time.Now().UnixNano()))
 			defer os.Remove(rrdFileNameCopy)
 
 			for i := 1; i < 5; i++ {
