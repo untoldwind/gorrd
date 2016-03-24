@@ -81,27 +81,13 @@ func (d *DatasourceAbstract) ProcessPdp(pdpValue, interval, preInt, postInt floa
 }
 
 func (d *DatasourceAbstract) DumpTo(dumper DataOutput) error {
-	if err := dumper.DumpString("name", d.Name); err != nil {
-		return err
-	}
-	if err := dumper.DumpUnsignedLong("minimal_heartbeat", d.Heartbeat); err != nil {
-		return err
-	}
-	if err := dumper.DumpDouble("min", d.Min); err != nil {
-		return err
-	}
-	if err := dumper.DumpDouble("max", d.Max); err != nil {
-		return err
-	}
-	if err := dumper.DumpString("last_ds", d.LastValue); err != nil {
-		return err
-	}
-	if err := dumper.DumpDouble("value", d.PdpValue); err != nil {
-		return err
-	}
-	if err := dumper.DumpUnsignedLong("unknown_sec", d.UnknownSecCount); err != nil {
-		return err
-	}
+	dumper.DumpString("name", d.Name)
+	dumper.DumpUnsignedLong("minimal_heartbeat", d.Heartbeat)
+	dumper.DumpDouble("min", d.Min)
+	dumper.DumpDouble("max", d.Max)
+	dumper.DumpString("last_ds", d.LastValue)
+	dumper.DumpDouble("value", d.PdpValue)
+	dumper.DumpUnsignedLong("unknown_sec", d.UnknownSecCount)
 	return nil
 }
 

@@ -27,11 +27,7 @@ func (d *DatasourceCompute) UpdatePdp(pdpValue, interval float64) {
 }
 
 func (d *DatasourceCompute) DumpTo(dumper DataOutput) error {
-	if err := dumper.DumpString("name", d.Name); err != nil {
-		return err
-	}
-	if err := dumper.DumpString("type", DatasourceTypeCompute); err != nil {
-		return err
-	}
+	dumper.DumpString("name", d.Name)
+	dumper.DumpString("type", DatasourceTypeCompute)
 	return dumper.Finalize()
 }

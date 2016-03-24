@@ -10,8 +10,9 @@ import (
 )
 
 type XmlDataOutput struct {
-	encoder *xml.Encoder
-	tag     string
+	encoder   *xml.Encoder
+	tag       string
+	lastError error
 }
 
 func NewXmlOutput(output io.Writer, prettyPrint bool) (*XmlDataOutput, error) {
@@ -47,36 +48,51 @@ func (d *XmlDataOutput) writeHeader() error {
 	})
 }
 
-func (d *XmlDataOutput) DumpComment(comment string) error {
-	return d.encoder.EncodeToken(xml.Comment(comment))
+func (d *XmlDataOutput) DumpComment(comment string) {
+	if d.lastError != nil {
+		return
+	}
+	d.lastError = d.encoder.EncodeToken(xml.Comment(comment))
 }
 
-func (d *XmlDataOutput) DumpString(field, value string) error {
-	return d.writeTokens([]xml.Token{
+func (d *XmlDataOutput) DumpString(field, value string) {
+	if d.lastError != nil {
+		return
+	}
+	d.lastError = d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(value),
 		xml.EndElement{Name: xml.Name{Local: field}},
 	})
 }
 
-func (d *XmlDataOutput) DumpDouble(field string, value float64) error {
-	return d.writeTokens([]xml.Token{
+func (d *XmlDataOutput) DumpDouble(field string, value float64) {
+	if d.lastError != nil {
+		return
+	}
+	d.lastError = d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(strconv.FormatFloat(value, 'e', 10, 64)),
 		xml.EndElement{Name: xml.Name{Local: field}},
 	})
 }
 
-func (d *XmlDataOutput) DumpUnsignedLong(field string, value uint64) error {
-	return d.writeTokens([]xml.Token{
+func (d *XmlDataOutput) DumpUnsignedLong(field string, value uint64) {
+	if d.lastError != nil {
+		return
+	}
+	d.lastError = d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(strconv.FormatUint(value, 10)),
 		xml.EndElement{Name: xml.Name{Local: field}},
 	})
 }
 
-func (d *XmlDataOutput) DumpTime(field string, value time.Time) error {
-	return d.writeTokens([]xml.Token{
+func (d *XmlDataOutput) DumpTime(field string, value time.Time) {
+	if d.lastError != nil {
+		return
+	}
+	d.lastError = d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(strconv.FormatInt(value.Unix(), 10)),
 		xml.EndElement{Name: xml.Name{Local: field}},
@@ -84,8 +100,11 @@ func (d *XmlDataOutput) DumpTime(field string, value time.Time) error {
 	})
 }
 
-func (d *XmlDataOutput) DumpDuration(field string, value time.Duration) error {
-	return d.writeTokens([]xml.Token{
+func (d *XmlDataOutput) DumpDuration(field string, value time.Duration) {
+	if d.lastError != nil {
+		return
+	}
+	d.lastError = d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(strconv.FormatInt(int64(value.Seconds()), 10)),
 		xml.EndElement{Name: xml.Name{Local: field}},
@@ -93,21 +112,29 @@ func (d *XmlDataOutput) DumpDuration(field string, value time.Duration) error {
 	})
 }
 
-func (d *XmlDataOutput) DumpSubFields(field string, subDump func(rrd.DataOutput) error) error {
+func (d *XmlDataOutput) DumpSubFields(field string, subDump func(rrd.DataOutput) error) {
+	if d.lastError != nil {
+		return
+	}
 	dumper := &XmlDataOutput{
 		encoder: d.encoder,
 		tag:     field,
 	}
 	if err := d.encoder.EncodeToken(xml.StartElement{Name: xml.Name{Local: field}}); err != nil {
-		return err
+		d.lastError = err
+		return
 	}
 	if err := subDump(dumper); err != nil {
-		return err
+		d.lastError = err
+		return
 	}
-	return dumper.Finalize()
+	d.lastError = dumper.Finalize()
 }
 
 func (d *XmlDataOutput) Finalize() error {
+	if d.lastError != nil {
+		return d.lastError
+	}
 	if err := d.encoder.EncodeToken(xml.EndElement{Name: xml.Name{Local: d.tag}}); err != nil {
 		return err
 	}

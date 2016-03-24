@@ -36,9 +36,7 @@ func (d *DatasourceGauge) CalculatePdpPrep(newValue string, interval float64) (f
 }
 
 func (d *DatasourceGauge) DumpTo(dumper DataOutput) error {
-	if err := dumper.DumpString("type", DatasourceTypeGauge); err != nil {
-		return err
-	}
+	dumper.DumpString("type", DatasourceTypeGauge)
 	return d.DatasourceAbstract.DumpTo(dumper)
 }
 

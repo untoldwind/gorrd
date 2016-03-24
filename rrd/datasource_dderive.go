@@ -44,8 +44,6 @@ func (d *DatasourceDDerive) CalculatePdpPrep(newValue string, interval float64) 
 }
 
 func (d *DatasourceDDerive) DumpTo(dumper DataOutput) error {
-	if err := dumper.DumpString("type", DatasourceTypeDDerive); err != nil {
-		return err
-	}
+	dumper.DumpString("type", DatasourceTypeDDerive)
 	return d.DatasourceAbstract.DumpTo(dumper)
 }

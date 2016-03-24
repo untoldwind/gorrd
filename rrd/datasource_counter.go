@@ -56,18 +56,14 @@ func (d *DatasourceCounter) CalculatePdpPrep(newValue string, interval float64) 
 }
 
 func (d *DatasourceCounter) DumpTo(dumper DataOutput) error {
-	if err := dumper.DumpString("type", DatasourceTypeCounter); err != nil {
-		return err
-	}
+	dumper.DumpString("type", DatasourceTypeCounter)
 	return d.DatasourceAbstract.DumpTo(dumper)
 }
 
 func newDatasourceCounter(index int, store Store) (*DatasourceCounter, error) {
 	result := &DatasourceCounter{}
 
-	if err := store.ReadDatasourceParams(index, result); err != nil {
-		return nil, err
-	}
+	store.ReadDatasourceParams(index, result)
 
 	return result, nil
 }

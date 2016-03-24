@@ -51,8 +51,6 @@ func (d *DatasourceDerive) UpdatePdCalculatePdpPreppPrep(newValue string, interv
 }
 
 func (d *DatasourceDerive) DumpTo(dumper DataOutput) error {
-	if err := dumper.DumpString("type", DatasourceTypeDerive); err != nil {
-		return err
-	}
+	dumper.DumpString("type", DatasourceTypeDerive)
 	return d.DatasourceAbstract.DumpTo(dumper)
 }

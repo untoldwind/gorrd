@@ -8,11 +8,9 @@ type RraAverage struct {
 	RraAbstractGeneric
 }
 
-func (r *RraAverage) DumpTo(rrdStore Store, dumper DataOutput) error {
-	if err := dumper.DumpString("cf", RraTypeAverage); err != nil {
-		return err
-	}
-	return r.RraAbstractGeneric.DumpTo(rrdStore, dumper)
+func (r *RraAverage) DumpTo(rrdStore Store, dumper DataOutput) {
+	dumper.DumpString("cf", RraTypeAverage)
+	r.RraAbstractGeneric.DumpTo(rrdStore, dumper)
 }
 
 func newRraAverage(index int, store Store) (*RraAverage, error) {

@@ -9,7 +9,7 @@ type Rra interface {
 	GetSecondaryValues() []float64
 	UpdateCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) (uint64, error)
 	UpdateAberantCdp(pdpTemp []float64, first bool) error
-	DumpTo(rrdStore Store, dumper DataOutput) error
+	DumpTo(rrdStore Store, dumper DataOutput)
 }
 
 type RraCpdPrepGeneric struct {
@@ -19,20 +19,12 @@ type RraCpdPrepGeneric struct {
 	UnknownDatapoints uint64  `cdp:"1"`
 }
 
-func (c *RraCpdPrepGeneric) DumpTo(dumper DataOutput) error {
-	return dumper.DumpSubFields("ds", func(ds DataOutput) error {
-		if err := ds.DumpDouble("primary_value", c.PrimaryValue); err != nil {
-			return err
-		}
-		if err := ds.DumpDouble("secondary_value", c.SecondaryValue); err != nil {
-			return err
-		}
-		if err := ds.DumpDouble("value", c.Value); err != nil {
-			return err
-		}
-		if err := ds.DumpUnsignedLong("unknown_datapoints", c.UnknownDatapoints); err != nil {
-			return err
-		}
+func (c *RraCpdPrepGeneric) DumpTo(dumper DataOutput) {
+	dumper.DumpSubFields("ds", func(ds DataOutput) error {
+		ds.DumpDouble("primary_value", c.PrimaryValue)
+		ds.DumpDouble("secondary_value", c.SecondaryValue)
+		ds.DumpDouble("value", c.Value)
+		ds.DumpUnsignedLong("unknown_datapoints", c.UnknownDatapoints)
 		return nil
 	})
 }
@@ -127,32 +119,26 @@ func (r *RraAbstractGeneric) UpdateAberantCdp(pdpTemp []float64, first bool) err
 	return nil
 }
 
-func (r *RraAbstractGeneric) DumpTo(rrdStore Store, dumper DataOutput) error {
-	if err := dumper.DumpUnsignedLong("pdp_per_row", r.PdpPerRow); err != nil {
-		return err
-	}
-	if err := dumper.DumpSubFields("params", func(params DataOutput) error {
-		return params.DumpDouble("xff", r.XFilesFactor)
-	}); err != nil {
-		return err
-	}
-	if err := dumper.DumpSubFields("cdp_prep", func(cdpPreps DataOutput) error {
+func (r *RraAbstractGeneric) DumpTo(rrdStore Store, dumper DataOutput) {
+	dumper.DumpUnsignedLong("pdp_per_row", r.PdpPerRow)
+	dumper.DumpSubFields("params", func(params DataOutput) error {
+		params.DumpDouble("xff", r.XFilesFactor)
+		return nil
+	})
+	dumper.DumpSubFields("cdp_prep", func(cdpPreps DataOutput) error {
 		for _, cdpPrep := range r.CpdPreps {
-			if err := cdpPrep.DumpTo(cdpPreps); err != nil {
-				return err
-			}
+			cdpPrep.DumpTo(cdpPreps)
 		}
 		return nil
-	}); err != nil {
-		return err
-	}
-	return dumper.DumpSubFields("database", func(database DataOutput) error {
+	})
+	dumper.DumpSubFields("database", func(database DataOutput) error {
 		rowIterator, err := rrdStore.RowIterator(r.Index)
 		if err != nil {
 			return err
 		}
 		return ForEachRow(rowIterator, func(row *RraRow) error {
-			return row.DumpTo(dumper)
+			row.DumpTo(dumper)
+			return nil
 		})
 	})
 }
