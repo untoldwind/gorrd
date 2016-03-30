@@ -86,6 +86,18 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, pro
 				} else {
 					r.InitializeCdpFunc(pdp, r.PdpPerRow, startPdpOffset, &r.CpdPreps[i])
 				}
+
+				var err error
+				r.CpdPreps[i].Value, err = r.InitializeCarryOverFunc(pdp, elapsedSteps, r.PdpPerRow, startPdpOffset, &r.CpdPreps[i])
+				if err != nil {
+					return 0, err
+				}
+
+				if math.IsNaN(pdp) {
+					r.CpdPreps[i].UnknownDatapoints = (elapsedSteps - startPdpOffset) % r.PdpPerRow
+				} else {
+					r.CpdPreps[i].UnknownDatapoints = 0
+				}
 			}
 		}
 	} else {
