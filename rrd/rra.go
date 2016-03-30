@@ -39,6 +39,7 @@ type RraAbstractGeneric struct {
 	UpdateAberantCdpFunc    func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric) error
 	InitializeCdpFunc       func(pdpTemp float64, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) error
 	InitializeCarryOverFunc func(pdpTemp float64, elapsedPdpSt, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) (float64, error)
+	CalculateCdpValueFunc   func(pdpTemp float64, elapsedPdpSt uint64, cpdPrep *RraCpdPrepGeneric) (float64, error)
 }
 
 func (r *RraAbstractGeneric) GetRowCount() uint64 {
@@ -97,6 +98,18 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, pro
 					r.CpdPreps[i].UnknownDatapoints = (elapsedSteps - startPdpOffset) % r.PdpPerRow
 				} else {
 					r.CpdPreps[i].UnknownDatapoints = 0
+				}
+			}
+		} else {
+			for i, pdp := range pdpTemp {
+				if math.IsNaN(pdp) {
+					r.CpdPreps[i].UnknownDatapoints += elapsedSteps
+				} else {
+					var err error
+					r.CpdPreps[i].Value, err = r.CalculateCdpValueFunc(pdp, elapsedSteps, &r.CpdPreps[i])
+					if err != nil {
+						return 0, err
+					}
 				}
 			}
 		}

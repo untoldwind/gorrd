@@ -41,6 +41,12 @@ func newRraAverage(index int, store Store) (*RraAverage, error) {
 				}
 				return pdpTemp * float64(pdpIntoCdpCnt), nil
 			},
+			CalculateCdpValueFunc: func(pdpTemp float64, elapsedPdpSt uint64, cpdPrep *RraCpdPrepGeneric) (float64, error) {
+				if math.IsNaN(cpdPrep.Value) {
+					return pdpTemp * float64(elapsedPdpSt), nil
+				}
+				return cpdPrep.Value + pdpTemp*float64(elapsedPdpSt), nil
+			},
 		},
 	}
 
