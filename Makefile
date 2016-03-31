@@ -29,6 +29,7 @@ coverage:
 
 godepssave:
 	@echo "--> Godeps save"
+	@go get github.com/tools/godep
 	@go build -v -o bin/godep github.com/tools/godep
 	@bin/godep save ./...
 

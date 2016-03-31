@@ -101,6 +101,8 @@ func newDatasource(index int, datasourceType string, store Store) (Datasource, e
 	switch datasourceType {
 	case DatasourceTypeCounter:
 		return newDatasourceCounter(index, store)
+	case DatasourceTypeDerive:
+		return newDatasourceDerive(index, store)
 	case DatasourceTypeGauge:
 		return newDatasourceGauge(index, store)
 	}

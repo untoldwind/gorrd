@@ -20,9 +20,7 @@ func (r *Rrd) Update(timestamp time.Time, values []string) error {
 	elapsed := r.calculateElapsedSteps(timestamp, interval)
 
 	if elapsed.Steps == 0 {
-		if err := r.simpleUpdate(newPdps, interval); err != nil {
-			return err
-		}
+		r.simpleUpdate(newPdps, interval)
 	} else {
 		pdpTemp := r.processAllPdp(newPdps, elapsed, interval)
 		rraStepCounts := r.updateAllCdpPreps(pdpTemp, elapsed)
@@ -55,12 +53,10 @@ func (r *Rrd) updatePdpPrep(newPdps []float64) error {
 	return nil
 }
 
-func (r *Rrd) simpleUpdate(newPdps []float64, interval float64) error {
+func (r *Rrd) simpleUpdate(newPdps []float64, interval float64) {
 	for i, newPdp := range newPdps {
 		r.Datasources[i].UpdatePdp(newPdp, interval)
 	}
-
-	return nil
 }
 
 func (r *Rrd) processAllPdp(newPdps []float64, elapsed ElapsedPdpSteps, interval float64) []float64 {

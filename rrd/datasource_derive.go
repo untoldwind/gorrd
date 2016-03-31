@@ -14,7 +14,7 @@ type DatasourceDerive struct {
 	DatasourceAbstract
 }
 
-func (d *DatasourceDerive) UpdatePdCalculatePdpPreppPrep(newValue string, interval float64) (float64, error) {
+func (d *DatasourceDerive) CalculatePdpPrep(newValue string, interval float64) (float64, error) {
 	if float64(d.Heartbeat) < interval {
 		d.LastValue = Undefined
 	}
@@ -53,4 +53,12 @@ func (d *DatasourceDerive) UpdatePdCalculatePdpPreppPrep(newValue string, interv
 func (d *DatasourceDerive) DumpTo(dumper DataOutput) error {
 	dumper.DumpString("type", DatasourceTypeDerive)
 	return d.DatasourceAbstract.DumpTo(dumper)
+}
+
+func newDatasourceDerive(index int, store Store) (*DatasourceDerive, error) {
+	result := &DatasourceDerive{}
+
+	store.ReadDatasourceParams(index, result)
+
+	return result, nil
 }
