@@ -49,6 +49,7 @@ func TestDumpCompatibility(t *testing.T) {
 				"RRA:AVERAGE:0.5:1:100",
 				"RRA:MIN:0.5:1:100",
 				"RRA:MAX:0.5:1:100",
+				"RRA:LAST:0.5:1:100",
 			); err != nil {
 				return false, err
 			}

@@ -45,6 +45,7 @@ func TestUpdateCompatibility(t *testing.T) {
 			"RRA:AVERAGE:0.5:1:24",
 			"RRA:MIN:0.5:1:24",
 			"RRA:MAX:0.5:1:24",
+			"RRA:LAST:0.5:1:24",
 		), ShouldBeNil)
 
 		Convey("When values are added in stepsize", func() {
@@ -105,6 +106,7 @@ func TestUpdateCompatibility(t *testing.T) {
 			"RRA:AVERAGE:0.5:12:24",
 			"RRA:MIN:0.5:12:24",
 			"RRA:MAX:0.5:12:24",
+			"RRA:LAST:0.5:12:24",
 		), ShouldBeNil)
 
 		Convey("When values are added within stepsize", func() {
@@ -140,6 +142,7 @@ func TestUpdateCompatibility(t *testing.T) {
 			"RRA:AVERAGE:0.5:2:24",
 			"RRA:MIN:0.5:2:24",
 			"RRA:MAX:0.5:2:24",
+			"RRA:LAST:0.5:2:24",
 		), ShouldBeNil)
 
 		Convey("When values are added in stepsize", func() {

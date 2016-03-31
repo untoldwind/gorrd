@@ -168,6 +168,8 @@ func newRra(index int, rraType string, store Store) (Rra, error) {
 		return newRraMin(index, store)
 	case RraTypeMax:
 		return newRraMax(index, store)
+	case RraTypeLast:
+		return newRraLast(index, store)
 	}
 	return nil, errors.Errorf("Unknown rra type: %s", rraType)
 }
