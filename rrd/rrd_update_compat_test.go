@@ -139,7 +139,7 @@ func TestUpdateCompatibility(t *testing.T) {
 			rrdFileNameCopy := filepath.Join(tempDir, fmt.Sprintf("comp_update3-copy-%d.rrd", time.Now().UnixNano()))
 			defer os.Remove(rrdFileNameCopy)
 
-			for i := 1; i < 2; i++ {
+			for i := 1; i < 10; i++ {
 				copyFile(rrdFileName, rrdFileNameCopy)
 				So(rrdtool.update(
 					rrdFileName,
@@ -150,6 +150,31 @@ func TestUpdateCompatibility(t *testing.T) {
 
 				So(err, ShouldBeNil)
 				So(rrdFileNameCopy, shouldHaveSameContentAs, rrdFileName)
+			}
+		})
+
+		Convey("When values are added with gaps", func() {
+			rrdFileNameCopy := filepath.Join(tempDir, fmt.Sprintf("comp_update3-copy-%d.rrd", time.Now().UnixNano()))
+			defer os.Remove(rrdFileNameCopy)
+
+			timestamp := int64(start + 400)
+			for i := 0; i < 20; i++ {
+				copyFile(rrdFileName, rrdFileNameCopy)
+				So(rrdtool.update(
+					rrdFileName,
+					fmt.Sprintf("%d:%d", timestamp, i*100+5),
+				), ShouldBeNil)
+
+				err := runUpdateCommand(rrdFileNameCopy, time.Unix(timestamp, 0), strconv.Itoa(i*100+5))
+
+				So(err, ShouldBeNil)
+				So(rrdFileNameCopy, shouldHaveSameContentAs, rrdFileName)
+
+				if i%4 < 3 {
+					timestamp += 200
+				} else {
+					timestamp += 400
+				}
 			}
 		})
 	})

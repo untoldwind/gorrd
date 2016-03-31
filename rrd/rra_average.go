@@ -31,7 +31,7 @@ func newRraAverage(index int, store Store) (*RraAverage, error) {
 				if math.IsNaN(currentVal) {
 					currentVal = 0
 				}
-				cpdPrep.PrimaryValue = cumulativeVal + currentVal*float64(startPdpOffset)/float64(pdpPerRow-cpdPrep.UnknownDatapoints)
+				cpdPrep.PrimaryValue = (cumulativeVal + currentVal*float64(startPdpOffset)) / float64(pdpPerRow-cpdPrep.UnknownDatapoints)
 				return nil
 			},
 			InitializeCarryOverFunc: func(pdpTemp float64, elapsedPdpSt, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) (float64, error) {

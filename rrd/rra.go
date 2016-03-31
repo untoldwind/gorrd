@@ -128,6 +128,9 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, pro
 }
 
 func (r *RraAbstractGeneric) UpdateAberantCdp(pdpTemp []float64, first bool) error {
+	if r.PdpPerRow != 1 {
+		return nil
+	}
 	for i, pdp := range pdpTemp {
 		if first {
 			r.CpdPreps[i].PrimaryValue = pdp
