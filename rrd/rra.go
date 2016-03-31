@@ -1,6 +1,10 @@
 package rrd
 
-import "math"
+import (
+	"math"
+
+	"github.com/go-errors/errors"
+)
 
 type Rra interface {
 	GetRowCount() uint64
@@ -160,8 +164,12 @@ func newRra(index int, rraType string, store Store) (Rra, error) {
 	switch rraType {
 	case RraTypeAverage:
 		return newRraAverage(index, store)
+	case RraTypeMin:
+		return newRraMin(index, store)
+	case RraTypeMax:
+		return newRraMax(index, store)
 	}
-	return nil, nil
+	return nil, errors.Errorf("Unknown rra type: %s", rraType)
 }
 
 func minUInt64(a, b uint64) uint64 {

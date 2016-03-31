@@ -47,6 +47,8 @@ func TestDumpCompatibility(t *testing.T) {
 				fmt.Sprintf("DS:counts:COUNTER:300:%d:%d", minCounter, maxCounter),
 				fmt.Sprintf("DS:derive:DERIVE:300:%d:%d", minDerive, maxDerive),
 				"RRA:AVERAGE:0.5:1:100",
+				"RRA:MIN:0.5:1:100",
+				"RRA:MAX:0.5:1:100",
 			); err != nil {
 				return false, err
 			}
