@@ -7,7 +7,7 @@ type Rra interface {
 	GetPdpPerRow() uint64
 	GetPrimaryValues() []float64
 	GetSecondaryValues() []float64
-	UpdateCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) (uint64, error)
+	UpdateCdpPreps(pdpTemp []float64, elapsed ElapsedPdpSteps) (uint64, error)
 	UpdateAberantCdp(pdpTemp []float64, first bool) error
 	DumpTo(rrdStore Store, dumper DataOutput)
 }
@@ -66,11 +66,11 @@ func (r *RraAbstractGeneric) GetSecondaryValues() []float64 {
 	return result
 }
 
-func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, procPdpCount uint64) (uint64, error) {
-	startPdpOffset := r.PdpPerRow - procPdpCount%r.PdpPerRow
+func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsed ElapsedPdpSteps) (uint64, error) {
+	startPdpOffset := r.PdpPerRow - elapsed.ProcPdpCount%r.PdpPerRow
 	var rraStepCount uint64
-	if startPdpOffset <= elapsedSteps {
-		rraStepCount = minUInt64((elapsedSteps-startPdpOffset)/r.PdpPerRow+1, r.RowCount)
+	if startPdpOffset <= elapsed.Steps {
+		rraStepCount = minUInt64((elapsed.Steps-startPdpOffset)/r.PdpPerRow+1, r.RowCount)
 	}
 	if r.PdpPerRow > 1 {
 		if rraStepCount > 0 {
@@ -89,13 +89,13 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, pro
 				}
 
 				var err error
-				r.CpdPreps[i].Value, err = r.InitializeCarryOverFunc(pdp, elapsedSteps, r.PdpPerRow, startPdpOffset, &r.CpdPreps[i])
+				r.CpdPreps[i].Value, err = r.InitializeCarryOverFunc(pdp, elapsed.Steps, r.PdpPerRow, startPdpOffset, &r.CpdPreps[i])
 				if err != nil {
 					return 0, err
 				}
 
 				if math.IsNaN(pdp) {
-					r.CpdPreps[i].UnknownDatapoints = (elapsedSteps - startPdpOffset) % r.PdpPerRow
+					r.CpdPreps[i].UnknownDatapoints = (elapsed.Steps - startPdpOffset) % r.PdpPerRow
 				} else {
 					r.CpdPreps[i].UnknownDatapoints = 0
 				}
@@ -103,10 +103,10 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, pro
 		} else {
 			for i, pdp := range pdpTemp {
 				if math.IsNaN(pdp) {
-					r.CpdPreps[i].UnknownDatapoints += elapsedSteps
+					r.CpdPreps[i].UnknownDatapoints += elapsed.Steps
 				} else {
 					var err error
-					r.CpdPreps[i].Value, err = r.CalculateCdpValueFunc(pdp, elapsedSteps, &r.CpdPreps[i])
+					r.CpdPreps[i].Value, err = r.CalculateCdpValueFunc(pdp, elapsed.Steps, &r.CpdPreps[i])
 					if err != nil {
 						return 0, err
 					}
@@ -115,7 +115,7 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsedSteps, pro
 		}
 	} else {
 		// There is just one PDP pre CDP
-		if elapsedSteps > 2 {
+		if elapsed.Steps > 2 {
 			for i, pdp := range pdpTemp {
 				if err := r.ResetCpdFunc(pdp, &r.CpdPreps[i]); err != nil {
 					return 0, err

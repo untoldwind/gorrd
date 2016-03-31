@@ -14,7 +14,7 @@ type Datasource interface {
 	GetLastValue() string
 	CalculatePdpPrep(newValue string, interval float64) (float64, error)
 	UpdatePdp(pdpValue, interval float64)
-	ProcessPdp(pdpValue, interval, preInt, postInt float64, elapsedSteps uint64, step time.Duration) float64
+	ProcessPdp(pdpValue, interval float64, elapsed ElapsedPdpSteps, step time.Duration) float64
 	DumpTo(dumper DataOutput) error
 }
 
@@ -50,31 +50,31 @@ func (d *DatasourceAbstract) UpdatePdp(pdpValue, interval float64) {
 	}
 }
 
-func (d *DatasourceAbstract) ProcessPdp(pdpValue, interval, preInt, postInt float64, elapsedSteps uint64, step time.Duration) float64 {
+func (d *DatasourceAbstract) ProcessPdp(pdpValue, interval float64, elapsed ElapsedPdpSteps, step time.Duration) float64 {
 	var preUnknown float64
 	if math.IsNaN(pdpValue) {
-		preUnknown = preInt
+		preUnknown = elapsed.PreInt
 	} else {
 		if math.IsNaN(d.PdpValue) {
 			d.PdpValue = 0
 		}
-		d.PdpValue += pdpValue / interval * preInt
+		d.PdpValue += pdpValue / interval * elapsed.PreInt
 	}
 	var pdpTemp float64
 
 	if interval > float64(d.Heartbeat) || uint64(step/time.Second/2) < d.UnknownSecCount {
 		pdpTemp = math.NaN()
 	} else {
-		diffPdpSteps := (elapsedSteps * uint64(step)) / uint64(time.Second)
+		diffPdpSteps := (elapsed.Steps * uint64(step)) / uint64(time.Second)
 		pdpTemp = d.PdpValue / (float64(diffPdpSteps-d.UnknownSecCount) - preUnknown)
 	}
 
 	if math.IsNaN(pdpValue) {
-		d.UnknownSecCount = uint64(postInt)
+		d.UnknownSecCount = uint64(elapsed.PostInt)
 		d.PdpValue = math.NaN()
 	} else {
 		d.UnknownSecCount = 0
-		d.PdpValue = pdpValue / interval * postInt
+		d.PdpValue = pdpValue / interval * elapsed.PostInt
 	}
 
 	return pdpTemp
