@@ -7,8 +7,8 @@ type Rra interface {
 	GetPdpPerRow() uint64
 	GetPrimaryValues() []float64
 	GetSecondaryValues() []float64
-	UpdateCdpPreps(pdpTemp []float64, elapsed ElapsedPdpSteps) (uint64, error)
-	UpdateAberantCdp(pdpTemp []float64, first bool) error
+	UpdateCdpPreps(pdpTemp []float64, elapsed ElapsedPdpSteps) uint64
+	UpdateAberantCdp(pdpTemp []float64, first bool)
 	DumpTo(rrdStore Store, dumper DataOutput)
 }
 
@@ -35,11 +35,11 @@ type RraAbstractGeneric struct {
 	PdpPerRow               uint64              `rra:"pdpPerRow"`
 	XFilesFactor            float64             `rra:"param0"`
 	CpdPreps                []RraCpdPrepGeneric `rra:"cpdPreps"`
-	ResetCpdFunc            func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric) error
-	UpdateAberantCdpFunc    func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric) error
-	InitializeCdpFunc       func(pdpTemp float64, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) error
-	InitializeCarryOverFunc func(pdpTemp float64, elapsedPdpSt, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) (float64, error)
-	CalculateCdpValueFunc   func(pdpTemp float64, elapsedPdpSt uint64, cpdPrep *RraCpdPrepGeneric) (float64, error)
+	ResetCpdFunc            func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric)
+	UpdateAberantCdpFunc    func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric)
+	InitializeCdpFunc       func(pdpTemp float64, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric)
+	InitializeCarryOverFunc func(pdpTemp float64, elapsedPdpSt, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) float64
+	CalculateCdpValueFunc   func(pdpTemp float64, elapsedPdpSt uint64, cpdPrep *RraCpdPrepGeneric) float64
 }
 
 func (r *RraAbstractGeneric) GetRowCount() uint64 {
@@ -66,7 +66,7 @@ func (r *RraAbstractGeneric) GetSecondaryValues() []float64 {
 	return result
 }
 
-func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsed ElapsedPdpSteps) (uint64, error) {
+func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsed ElapsedPdpSteps) uint64 {
 	startPdpOffset := r.PdpPerRow - elapsed.ProcPdpCount%r.PdpPerRow
 	var rraStepCount uint64
 	if startPdpOffset <= elapsed.Steps {
@@ -88,11 +88,7 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsed ElapsedPd
 					r.InitializeCdpFunc(pdp, r.PdpPerRow, startPdpOffset, &r.CpdPreps[i])
 				}
 
-				var err error
-				r.CpdPreps[i].Value, err = r.InitializeCarryOverFunc(pdp, elapsed.Steps, r.PdpPerRow, startPdpOffset, &r.CpdPreps[i])
-				if err != nil {
-					return 0, err
-				}
+				r.CpdPreps[i].Value = r.InitializeCarryOverFunc(pdp, elapsed.Steps, r.PdpPerRow, startPdpOffset, &r.CpdPreps[i])
 
 				if math.IsNaN(pdp) {
 					r.CpdPreps[i].UnknownDatapoints = (elapsed.Steps - startPdpOffset) % r.PdpPerRow
@@ -105,11 +101,7 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsed ElapsedPd
 				if math.IsNaN(pdp) {
 					r.CpdPreps[i].UnknownDatapoints += elapsed.Steps
 				} else {
-					var err error
-					r.CpdPreps[i].Value, err = r.CalculateCdpValueFunc(pdp, elapsed.Steps, &r.CpdPreps[i])
-					if err != nil {
-						return 0, err
-					}
+					r.CpdPreps[i].Value = r.CalculateCdpValueFunc(pdp, elapsed.Steps, &r.CpdPreps[i])
 				}
 			}
 		}
@@ -117,19 +109,16 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsed ElapsedPd
 		// There is just one PDP pre CDP
 		if elapsed.Steps > 2 {
 			for i, pdp := range pdpTemp {
-				if err := r.ResetCpdFunc(pdp, &r.CpdPreps[i]); err != nil {
-					return 0, err
-				}
+				r.ResetCpdFunc(pdp, &r.CpdPreps[i])
 			}
-			return rraStepCount, nil
 		}
 	}
-	return rraStepCount, nil
+	return rraStepCount
 }
 
-func (r *RraAbstractGeneric) UpdateAberantCdp(pdpTemp []float64, first bool) error {
+func (r *RraAbstractGeneric) UpdateAberantCdp(pdpTemp []float64, first bool) {
 	if r.PdpPerRow != 1 {
-		return nil
+		return
 	}
 	for i, pdp := range pdpTemp {
 		if first {
@@ -138,13 +127,9 @@ func (r *RraAbstractGeneric) UpdateAberantCdp(pdpTemp []float64, first bool) err
 			r.CpdPreps[i].SecondaryValue = pdp
 		}
 		if r.UpdateAberantCdpFunc != nil {
-			if err := r.UpdateAberantCdpFunc(pdp, &r.CpdPreps[i]); err != nil {
-				return err
-			}
+			r.UpdateAberantCdpFunc(pdp, &r.CpdPreps[i])
 		}
 	}
-
-	return nil
 }
 
 func (r *RraAbstractGeneric) DumpTo(rrdStore Store, dumper DataOutput) {

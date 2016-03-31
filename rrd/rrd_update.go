@@ -24,20 +24,10 @@ func (r *Rrd) Update(timestamp time.Time, values []string) error {
 			return err
 		}
 	} else {
-		pdpTemp, err := r.processAllPdp(newPdps, elapsed, interval)
-		if err != nil {
-			return err
-		}
-		rraStepCounts, err := r.updateAllCdpPreps(pdpTemp, elapsed)
-		if err != nil {
-			return err
-		}
-		if err := r.updateAberrantCdps(pdpTemp, elapsed); err != nil {
-			return err
-		}
-		if err := r.writeToRras(rraStepCounts); err != nil {
-			return err
-		}
+		pdpTemp := r.processAllPdp(newPdps, elapsed, interval)
+		rraStepCounts := r.updateAllCdpPreps(pdpTemp, elapsed)
+		r.updateAberrantCdps(pdpTemp, elapsed)
+		r.writeToRras(rraStepCounts)
 		for i, rra := range r.Rras {
 			if err := r.Store.StoreRraParams(i, rra); err != nil {
 				return err
@@ -73,40 +63,33 @@ func (r *Rrd) simpleUpdate(newPdps []float64, interval float64) error {
 	return nil
 }
 
-func (r *Rrd) processAllPdp(newPdps []float64, elapsed ElapsedPdpSteps, interval float64) ([]float64, error) {
+func (r *Rrd) processAllPdp(newPdps []float64, elapsed ElapsedPdpSteps, interval float64) []float64 {
 	pdpTemp := make([]float64, len(newPdps))
 	for i, newPdp := range newPdps {
 		pdpTemp[i] = r.Datasources[i].ProcessPdp(newPdp, interval, elapsed, r.Step)
 	}
-	return pdpTemp, nil
+	return pdpTemp
 }
 
-func (r *Rrd) updateAllCdpPreps(pdpTemp []float64, elapsed ElapsedPdpSteps) ([]uint64, error) {
+func (r *Rrd) updateAllCdpPreps(pdpTemp []float64, elapsed ElapsedPdpSteps) []uint64 {
 	rraStepCounts := make([]uint64, len(r.Rras))
-	var err error
 	for i, rra := range r.Rras {
-		rraStepCounts[i], err = rra.UpdateCdpPreps(pdpTemp, elapsed)
-		if err != nil {
-			return nil, err
-		}
+		rraStepCounts[i] = rra.UpdateCdpPreps(pdpTemp, elapsed)
 	}
-	return rraStepCounts, nil
+	return rraStepCounts
 }
 
-func (r *Rrd) updateAberrantCdps(pdpTemp []float64, elapsed ElapsedPdpSteps) error {
+func (r *Rrd) updateAberrantCdps(pdpTemp []float64, elapsed ElapsedPdpSteps) {
 	first := true
 	for j := elapsed.Steps; j > 0 && j < 3; j-- {
 		for _, rra := range r.Rras {
-			if err := rra.UpdateAberantCdp(pdpTemp, first); err != nil {
-				return nil
-			}
+			rra.UpdateAberantCdp(pdpTemp, first)
 		}
 		first = false
 	}
-	return nil
 }
 
-func (r *Rrd) writeToRras(rraStepCounts []uint64) error {
+func (r *Rrd) writeToRras(rraStepCounts []uint64) {
 	for i, rra := range r.Rras {
 		for first := true; rraStepCounts[i] > 0; rraStepCounts[i]-- {
 			if first {
@@ -117,7 +100,6 @@ func (r *Rrd) writeToRras(rraStepCounts []uint64) error {
 			first = false
 		}
 	}
-	return nil
 }
 
 func (r *Rrd) writeChanges(timestamp time.Time) error {
