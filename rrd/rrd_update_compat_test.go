@@ -41,6 +41,7 @@ func TestUpdateCompatibility(t *testing.T) {
 			strconv.Itoa(start),
 			"300",
 			"DS:watts:GAUGE:300:0:100000",
+			"DS:counter:COUNTER:300:0:10000",
 			"RRA:AVERAGE:0.5:1:24",
 		), ShouldBeNil)
 
@@ -52,10 +53,10 @@ func TestUpdateCompatibility(t *testing.T) {
 				copyFile(rrdFileName, rrdFileNameCopy)
 				So(rrdtool.update(
 					rrdFileName,
-					fmt.Sprintf("%d:%d", 300*i+start, i*100+5),
+					fmt.Sprintf("%d:%d:%d", 300*i+start, i*100+5, i*200+10),
 				), ShouldBeNil)
 
-				err := runUpdateCommand(rrdFileNameCopy, time.Unix(int64(300*i+start), 0), strconv.Itoa(i*100+5))
+				err := runUpdateCommand(rrdFileNameCopy, time.Unix(int64(300*i+start), 0), strconv.Itoa(i*100+5), strconv.Itoa(i*200+10))
 
 				So(err, ShouldBeNil)
 				So(rrdFileNameCopy, shouldHaveSameContentAs, rrdFileName)
@@ -71,10 +72,10 @@ func TestUpdateCompatibility(t *testing.T) {
 				copyFile(rrdFileName, rrdFileNameCopy)
 				So(rrdtool.update(
 					rrdFileName,
-					fmt.Sprintf("%d:%d", timestamp, i*100+5),
+					fmt.Sprintf("%d:%d:%d", timestamp, i*100+5, i*200+10),
 				), ShouldBeNil)
 
-				err := runUpdateCommand(rrdFileNameCopy, time.Unix(timestamp, 0), strconv.Itoa(i*100+5))
+				err := runUpdateCommand(rrdFileNameCopy, time.Unix(timestamp, 0), strconv.Itoa(i*100+5), strconv.Itoa(i*200+10))
 
 				So(err, ShouldBeNil)
 				So(rrdFileNameCopy, shouldHaveSameContentAs, rrdFileName)
