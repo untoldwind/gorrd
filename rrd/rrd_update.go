@@ -11,18 +11,17 @@ func (r *Rrd) Update(timestamp time.Time, values []string) error {
 		return errors.Errorf("illegal attempt to update using time %s when last update time is %s (minimum one second step)", timestamp.String(), r.LastUpdate.String())
 	}
 
-	interval := float64(timestamp.Sub(r.LastUpdate).Nanoseconds()) / 1e9
-	newPdps, err := r.calculatePdpPreps(interval, values)
+	elapsed := r.calculateElapsedSteps(timestamp)
+
+	newPdps, err := r.calculatePdpPreps(elapsed.Interval, values)
 	if err != nil {
 		return err
 	}
 
-	elapsed := r.calculateElapsedSteps(timestamp, interval)
-
 	if elapsed.Steps == 0 {
-		r.simpleUpdate(newPdps, interval)
+		r.simpleUpdate(newPdps, elapsed.Interval)
 	} else {
-		pdpTemp := r.processAllPdp(newPdps, elapsed, interval)
+		pdpTemp := r.processAllPdp(newPdps, elapsed)
 		rraStepCounts := r.updateAllCdpPreps(pdpTemp, elapsed)
 		r.updateAberrantCdps(pdpTemp, elapsed)
 		r.writeToRras(rraStepCounts)
@@ -59,10 +58,10 @@ func (r *Rrd) simpleUpdate(newPdps []float64, interval float64) {
 	}
 }
 
-func (r *Rrd) processAllPdp(newPdps []float64, elapsed ElapsedPdpSteps, interval float64) []float64 {
+func (r *Rrd) processAllPdp(newPdps []float64, elapsed ElapsedPdpSteps) []float64 {
 	pdpTemp := make([]float64, len(newPdps))
 	for i, newPdp := range newPdps {
-		pdpTemp[i] = r.Datasources[i].ProcessPdp(newPdp, interval, elapsed, r.Step)
+		pdpTemp[i] = r.Datasources[i].ProcessPdp(newPdp, elapsed, r.Step)
 	}
 	return pdpTemp
 }

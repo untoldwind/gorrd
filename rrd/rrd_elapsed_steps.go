@@ -3,13 +3,16 @@ package rrd
 import "time"
 
 type ElapsedPdpSteps struct {
+	Interval     float64
 	Steps        uint64
 	PreInt       float64
 	PostInt      float64
 	ProcPdpCount uint64
 }
 
-func (r *Rrd) calculateElapsedSteps(timestamp time.Time, interval float64) ElapsedPdpSteps {
+func (r *Rrd) calculateElapsedSteps(timestamp time.Time) ElapsedPdpSteps {
+	interval := float64(timestamp.Sub(r.LastUpdate).Nanoseconds()) / 1e9
+
 	procPdpAge := r.LastUpdate.Unix() % int64(r.Step/time.Second)
 	procPdpSt := r.LastUpdate.Unix() - procPdpAge
 
@@ -31,6 +34,7 @@ func (r *Rrd) calculateElapsedSteps(timestamp time.Time, interval float64) Elaps
 	procPdpCount := procPdpSt / int64(r.Step/time.Second)
 
 	return ElapsedPdpSteps{
+		Interval:     interval,
 		Steps:        uint64(occuPdpSt-procPdpSt) / uint64(r.Step/time.Second),
 		PreInt:       preInt,
 		PostInt:      postInt,
