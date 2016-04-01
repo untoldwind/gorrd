@@ -67,10 +67,19 @@ func (r rrdTool) dump(rrdFileName string) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer stdout.Close()
 
-	cmd.Start()
-	return flattenXml(stdout)
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+	result, err := flattenXml(stdout)
+	if err != nil {
+		return nil, err
+	}
+	if err := cmd.Wait(); err != nil {
+		return nil, err
+	}
+
+	return result, err
 }
 
 type elementRef struct {
