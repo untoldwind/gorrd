@@ -15,26 +15,14 @@ func (r *RraLast) DumpTo(rrdStore Store, dumper DataOutput) {
 
 func newRraLast(index int, store Store) (*RraLast, error) {
 	result := &RraLast{
-		RraAbstractGeneric: RraAbstractGeneric{
-			Index: index,
-			ResetCpdFunc: func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric) {
-				cpdPrep.PrimaryValue = pdpTemp
-				cpdPrep.SecondaryValue = pdpTemp
-			},
-			InitializeCdpFunc: func(pdpTemp float64, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) {
-				cpdPrep.PrimaryValue = pdpTemp
-			},
-			InitializeCarryOverFunc: func(pdpTemp float64, elapsedPdpSt, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) float64 {
-				pdpIntoCdpCnt := (elapsedPdpSt - startPdpOffset) % pdpPerRow
-				if pdpIntoCdpCnt == 0 || math.IsNaN(pdpTemp) {
-					return math.NaN()
-				}
-				return pdpTemp
-			},
-			CalculateCdpValueFunc: func(pdpTemp float64, elapsedPdpSt uint64, cpdPrep *RraCpdPrepGeneric) float64 {
-				return pdpTemp
-			},
-		},
+		newRraAbstractGeneric(index, math.NaN()),
+	}
+	result.InitializeCdpFunc = func(pdpTemp float64, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) {
+		cpdPrep.PrimaryValue = pdpTemp
+	}
+
+	result.CalculateCdpValueFunc = func(pdpTemp float64, elapsedPdpSt uint64, cpdPrep *RraCpdPrepGeneric) float64 {
+		return pdpTemp
 	}
 
 	if err := store.ReadRraParams(index, result); err != nil {
