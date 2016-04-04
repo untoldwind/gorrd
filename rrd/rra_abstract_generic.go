@@ -1,10 +1,6 @@
 package rrd
 
-import (
-	"math"
-
-	"github.com/go-errors/errors"
-)
+import "math"
 
 type RraCpdPrepGeneric struct {
 	PrimaryValue      float64 `cdp:"8"`
@@ -48,6 +44,9 @@ func newRraAbstractGeneric(index int, initialCarryOver float64) RraAbstractGener
 			if pdpIntoCdpCnt == 0 || math.IsNaN(pdpTemp) {
 				return initialCarryOver
 			}
+			return pdpTemp
+		},
+		CalculateCdpValueFunc: func(pdpTemp float64, elapsedPdpSt uint64, cpdPrep *RraCpdPrepGeneric) float64 {
 			return pdpTemp
 		},
 	}
@@ -165,20 +164,6 @@ func (r *RraAbstractGeneric) DumpTo(rrdStore Store, dumper DataOutput) {
 			return nil
 		})
 	})
-}
-
-func newRra(index int, rraType string, store Store) (Rra, error) {
-	switch rraType {
-	case RraTypeAverage:
-		return newRraAverage(index, store)
-	case RraTypeMin:
-		return newRraMin(index, store)
-	case RraTypeMax:
-		return newRraMax(index, store)
-	case RraTypeLast:
-		return newRraLast(index, store)
-	}
-	return nil, errors.Errorf("Unknown rra type: %s", rraType)
 }
 
 func minUInt64(a, b uint64) uint64 {
