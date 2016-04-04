@@ -58,28 +58,16 @@ func (r rrdTool) update(rrdFileName string, updates ...string) error {
 	return cmd.Run()
 }
 
-func (r rrdTool) dump(rrdFileName string) (map[string]string, error) {
+func (r rrdTool) dump(rrdFileName string) (map[string]interface{}, error) {
+	output := bytes.NewBufferString("")
 	cmd := exec.Command(string(r), "dump", rrdFileName)
+	cmd.Stdout = output
 	cmd.Stderr = os.Stderr
 
-	stdout, err := cmd.StdoutPipe()
-
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return nil, err
 	}
-
-	if err := cmd.Start(); err != nil {
-		return nil, err
-	}
-	result, err := flattenXml(stdout)
-	if err != nil {
-		return nil, err
-	}
-	if err := cmd.Wait(); err != nil {
-		return nil, err
-	}
-
-	return result, err
+	return flattenXml(output.String())
 }
 
 type elementRef struct {
@@ -95,9 +83,9 @@ func (e *elementRef) String() string {
 	return fmt.Sprintf("%s[%d]", e.name, e.count)
 }
 
-func flattenXml(in io.Reader) (map[string]string, error) {
-	decoder := xml.NewDecoder(in)
-	result := make(map[string]string, 0)
+func flattenXml(xmlStr string) (map[string]interface{}, error) {
+	decoder := xml.NewDecoder(bytes.NewBufferString(xmlStr))
+	result := make(map[string]interface{}, 0)
 
 	buffer := bytes.NewBufferString("")
 	elementStack := make([]*elementRef, 0)

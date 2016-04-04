@@ -19,7 +19,7 @@ import (
 
 const minGauge, maxGauge = 0, 100000
 const minCounter, maxCounter = 0, 1000
-const minDerive, maxDerive = 0, 10000
+const minDerive, maxDerive = -1000, 10000
 
 func TestDumpCompatibility(t *testing.T) {
 	rrdtool, err := findRrdTool()
@@ -30,7 +30,7 @@ func TestDumpCompatibility(t *testing.T) {
 	}
 
 	parameters := gopter.DefaultTestParameters()
-	parameters.MinSuccessfulTests = 10
+	parameters.MinSuccessfulTests = 20
 	properties := gopter.NewProperties(parameters)
 
 	properties.Property("dump of gauge, counter, derive is compatile", prop.ForAllNoShrink(
@@ -112,7 +112,7 @@ func counterGen(start int) gopter.Gen {
 	}
 }
 
-func runDumpCommand(rrdFileName string) (map[string]string, error) {
+func runDumpCommand(rrdFileName string) (map[string]interface{}, error) {
 	rrd, err := cdata.OpenRrdRawFile(rrdFileName, true)
 	if err != nil {
 		return nil, err
@@ -129,7 +129,7 @@ func runDumpCommand(rrdFileName string) (map[string]string, error) {
 		return nil, err
 	}
 
-	return flattenXml(bytes.NewBufferString(buffer.String()))
+	return flattenXml(buffer.String())
 }
 
 func integrateInts(v interface{}) interface{} {

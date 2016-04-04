@@ -1,9 +1,9 @@
 package commands_test
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -23,19 +23,16 @@ func TestDumpCompatibility(t *testing.T) {
 		return
 	}
 
-	runDumpCommand := func(rrdFileName string) (map[string]string, error) {
-		pipeReader, pipeWriter := io.Pipe()
-		go func() {
-			flags := flag.NewFlagSet("gorrd", flag.ContinueOnError)
-			flags.Parse([]string{rrdFileName})
-			ctx := cli.NewContext(&cli.App{
-				Writer: pipeWriter,
-			}, flags, nil)
-			commands.DumpCommand.Action(ctx)
-			pipeWriter.Close()
-		}()
+	runDumpCommand := func(rrdFileName string) (map[string]interface{}, error) {
+		output := bytes.NewBufferString("")
+		flags := flag.NewFlagSet("gorrd", flag.ContinueOnError)
+		flags.Parse([]string{rrdFileName})
+		ctx := cli.NewContext(&cli.App{
+			Writer: output,
+		}, flags, nil)
+		commands.DumpCommand.Action(ctx)
 
-		return flattenXml(pipeReader)
+		return flattenXml(output.String())
 	}
 
 	Convey("Given minimal rrdfile with 5m step", t, func() {

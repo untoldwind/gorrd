@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-errors/errors"
 	"github.com/untoldwind/gorrd/rrd"
 )
 
@@ -34,7 +35,7 @@ func NewXmlOutput(output io.Writer, prettyPrint bool) (*XmlDataOutput, error) {
 func (d *XmlDataOutput) writeTokens(tokens []xml.Token) error {
 	for _, token := range tokens {
 		if err := d.encoder.EncodeToken(token); err != nil {
-			return err
+			return errors.Wrap(err, 0)
 		}
 	}
 	return nil
@@ -52,7 +53,9 @@ func (d *XmlDataOutput) DumpComment(comment string) {
 	if d.lastError != nil {
 		return
 	}
-	d.lastError = d.encoder.EncodeToken(xml.Comment(comment))
+	if err := d.encoder.EncodeToken(xml.Comment(comment)); err != nil {
+		d.lastError = errors.Wrap(err, 0)
+	}
 }
 
 func (d *XmlDataOutput) DumpString(field, value string) {
@@ -70,46 +73,54 @@ func (d *XmlDataOutput) DumpDouble(field string, value float64) {
 	if d.lastError != nil {
 		return
 	}
-	d.lastError = d.writeTokens([]xml.Token{
+	if err := d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(strconv.FormatFloat(value, 'e', 10, 64)),
 		xml.EndElement{Name: xml.Name{Local: field}},
-	})
+	}); err != nil {
+		d.lastError = errors.Wrap(err, 0)
+	}
 }
 
 func (d *XmlDataOutput) DumpUnsignedLong(field string, value uint64) {
 	if d.lastError != nil {
 		return
 	}
-	d.lastError = d.writeTokens([]xml.Token{
+	if err := d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(strconv.FormatUint(value, 10)),
 		xml.EndElement{Name: xml.Name{Local: field}},
-	})
+	}); err != nil {
+		d.lastError = errors.Wrap(err, 0)
+	}
 }
 
 func (d *XmlDataOutput) DumpTime(field string, value time.Time) {
 	if d.lastError != nil {
 		return
 	}
-	d.lastError = d.writeTokens([]xml.Token{
+	if err := d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(strconv.FormatInt(value.Unix(), 10)),
 		xml.EndElement{Name: xml.Name{Local: field}},
 		xml.Comment(value.String()),
-	})
+	}); err != nil {
+		d.lastError = errors.Wrap(err, 0)
+	}
 }
 
 func (d *XmlDataOutput) DumpDuration(field string, value time.Duration) {
 	if d.lastError != nil {
 		return
 	}
-	d.lastError = d.writeTokens([]xml.Token{
+	if err := d.writeTokens([]xml.Token{
 		xml.StartElement{Name: xml.Name{Local: field}},
 		xml.CharData(strconv.FormatInt(int64(value.Seconds()), 10)),
 		xml.EndElement{Name: xml.Name{Local: field}},
 		xml.Comment(value.String()),
-	})
+	}); err != nil {
+		d.lastError = errors.Wrap(err, 0)
+	}
 }
 
 func (d *XmlDataOutput) DumpSubFields(field string, subDump func(rrd.DataOutput) error) {
@@ -136,7 +147,7 @@ func (d *XmlDataOutput) Finalize() error {
 		return d.lastError
 	}
 	if err := d.encoder.EncodeToken(xml.EndElement{Name: xml.Name{Local: d.tag}}); err != nil {
-		return err
+		return errors.Wrap(err, 0)
 	}
 	return d.encoder.Flush()
 }

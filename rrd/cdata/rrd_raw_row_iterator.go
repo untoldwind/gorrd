@@ -34,7 +34,9 @@ type rrdRawRowIterator struct {
 }
 
 func (i *rrdRawRowIterator) seekStart() {
-	i.reader.Seek((i.rraPtr + 1) * i.colCount * i.reader.ValueSize())
+	if i.rraPtr+1 < i.rowCount {
+		i.reader.Seek((i.rraPtr + 1) * i.colCount * i.reader.ValueSize())
+	}
 }
 
 func (i *rrdRawRowIterator) Next() bool {
