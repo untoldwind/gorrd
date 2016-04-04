@@ -1,7 +1,9 @@
 package rrd
 
+import "fmt"
+
 func (r *Rrd) DumpTo(dumper DataOutput) error {
-	dumper.DumpString("version", "0003")
+	dumper.DumpString("version", fmt.Sprintf("%04d", r.Version))
 	dumper.DumpDuration("step", r.Step)
 	dumper.DumpTime("lastupdate", r.LastUpdate)
 	for _, datasource := range r.Datasources {

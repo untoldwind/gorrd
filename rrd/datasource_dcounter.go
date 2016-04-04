@@ -50,3 +50,11 @@ func (d *DatasourceDCounter) DumpTo(dumper DataOutput) error {
 	dumper.DumpString("type", DatasourceTypeDCounter)
 	return d.DatasourceAbstract.DumpTo(dumper)
 }
+
+func newDatasourceDCounter(index int, store Store) (*DatasourceDCounter, error) {
+	result := &DatasourceDCounter{}
+
+	store.ReadDatasourceParams(index, result)
+
+	return result, nil
+}

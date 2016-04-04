@@ -47,3 +47,11 @@ func (d *DatasourceDDerive) DumpTo(dumper DataOutput) error {
 	dumper.DumpString("type", DatasourceTypeDDerive)
 	return d.DatasourceAbstract.DumpTo(dumper)
 }
+
+func newDatasourceDDerive(index int, store Store) (*DatasourceDDerive, error) {
+	result := &DatasourceDDerive{}
+
+	store.ReadDatasourceParams(index, result)
+
+	return result, nil
+}

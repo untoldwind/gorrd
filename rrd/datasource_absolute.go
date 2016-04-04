@@ -39,3 +39,11 @@ func (d *DatasourceAbsolute) DumpTo(dumper DataOutput) error {
 	dumper.DumpString("type", DatasourceTypeAbsolute)
 	return d.DatasourceAbstract.DumpTo(dumper)
 }
+
+func newDatasourceAbsolute(index int, store Store) (*DatasourceAbsolute, error) {
+	result := &DatasourceAbsolute{}
+
+	store.ReadDatasourceParams(index, result)
+
+	return result, nil
+}

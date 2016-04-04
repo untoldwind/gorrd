@@ -7,6 +7,7 @@ import (
 )
 
 type rrdRawHeader struct {
+	version         uint16
 	datasourceCount uint64
 	rraCount        uint64
 	pdpStep         uint64
@@ -19,9 +20,13 @@ func (f *RrdRawFile) readVersionHeader(reader *CDataReader) error {
 		return errors.Errorf("Invalid cookie: %+v", cookie)
 	}
 
-	if versionStr, err := reader.ReadCString(5); err != nil {
+	versionStr, err := reader.ReadCString(5)
+	if err != nil {
 		return err
-	} else if version, err := strconv.ParseInt(string(versionStr[:4]), 10, 8); err != nil {
+	}
+
+	version, err := strconv.ParseInt(string(versionStr[:4]), 10, 16)
+	if err != nil {
 		return errors.Errorf("Invalid version: %+v", version)
 	} else if version < 3 {
 		return errors.Errorf("Version %d not supported: ", version)
@@ -49,6 +54,7 @@ func (f *RrdRawFile) readVersionHeader(reader *CDataReader) error {
 	}
 
 	f.header = &rrdRawHeader{
+		version:         uint16(version),
 		datasourceCount: datasourceCount,
 		rraCount:        rraCount,
 		pdpStep:         pdpStep,

@@ -58,6 +58,10 @@ func OpenRrdRawFile(name string, readOnly bool) (*rrd.Rrd, error) {
 	return rrd, nil
 }
 
+func (f *RrdRawFile) Version() uint16 {
+	return f.header.version
+}
+
 func (f *RrdRawFile) LastUpdate() time.Time {
 	return f.lastUpdate
 }

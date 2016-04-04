@@ -99,8 +99,14 @@ func (d *DatasourceAbstract) checkRateBounds(rate float64) bool {
 
 func newDatasource(index int, datasourceType string, store Store) (Datasource, error) {
 	switch datasourceType {
+	case DatasourceTypeAbsolute:
+		return newDatasourceAbsolute(index, store)
 	case DatasourceTypeCounter:
 		return newDatasourceCounter(index, store)
+	case DatasourceTypeDCounter:
+		return newDatasourceDCounter(index, store)
+	case DatasourceTypeDDerive:
+		return newDatasourceDDerive(index, store)
 	case DatasourceTypeDerive:
 		return newDatasourceDerive(index, store)
 	case DatasourceTypeGauge:

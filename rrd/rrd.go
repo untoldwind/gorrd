@@ -3,6 +3,7 @@ package rrd
 import "time"
 
 type Rrd struct {
+	Version     uint16
 	Store       Store
 	Step        time.Duration
 	LastUpdate  time.Time
@@ -21,6 +22,7 @@ func NewRrd(store Store) (*Rrd, error) {
 		}
 	}
 
+	version := store.Version()
 	rraTypes := store.RraTypes()
 	rras := make([]Rra, len(rraTypes))
 	for i, rraType := range rraTypes {
@@ -31,6 +33,7 @@ func NewRrd(store Store) (*Rrd, error) {
 	}
 
 	return &Rrd{
+		Version:     version,
 		Store:       store,
 		Step:        store.Step(),
 		LastUpdate:  store.LastUpdate(),

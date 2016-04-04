@@ -3,6 +3,7 @@ package rrd
 import "time"
 
 type Store interface {
+	Version() uint16
 	DatasourceTypes() []string
 	RraTypes() []string
 	LastUpdate() time.Time
