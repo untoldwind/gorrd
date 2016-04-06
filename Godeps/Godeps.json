@@ -1,7 +1,6 @@
 {
 	"ImportPath": "github.com/untoldwind/gorrd",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v60",
 	"Packages": [
 		"./..."
 	],
@@ -32,15 +31,15 @@
 		},
 		{
 			"ImportPath": "github.com/leanovate/gopter",
-			"Rev": "36a56abc0ba0a360484d8004a701d4416b74c7ef"
+			"Rev": "769ae14459bc3b0a4c58b4df232b9e84e29b1c8c"
 		},
 		{
 			"ImportPath": "github.com/leanovate/gopter/gen",
-			"Rev": "36a56abc0ba0a360484d8004a701d4416b74c7ef"
+			"Rev": "769ae14459bc3b0a4c58b4df232b9e84e29b1c8c"
 		},
 		{
 			"ImportPath": "github.com/leanovate/gopter/prop",
-			"Rev": "36a56abc0ba0a360484d8004a701d4416b74c7ef"
+			"Rev": "769ae14459bc3b0a4c58b4df232b9e84e29b1c8c"
 		},
 		{
 			"ImportPath": "github.com/smartystreets/assertions",
