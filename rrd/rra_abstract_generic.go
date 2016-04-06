@@ -8,6 +8,11 @@ type RraCpdPrepGeneric struct {
 	UnknownDatapoints uint64  `cdp:"1"`
 }
 
+func (r *RraCpdPrepGeneric) Reset(pdp float64) {
+	r.PrimaryValue = pdp
+	r.SecondaryValue = pdp
+}
+
 func (c *RraCpdPrepGeneric) DumpTo(dumper DataOutput) {
 	dumper.DumpSubFields("ds", func(ds DataOutput) error {
 		ds.DumpDouble("primary_value", c.PrimaryValue)
@@ -22,7 +27,6 @@ type RraAbstractGeneric struct {
 	RraAbstract
 	XFilesFactor            float64             `rra:"param0"`
 	CpdPreps                []RraCpdPrepGeneric `rra:"cpdPreps"`
-	ResetCpdFunc            func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric)
 	UpdateAberantCdpFunc    func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric)
 	InitializeCdpFunc       func(pdpTemp float64, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric)
 	InitializeCarryOverFunc func(pdpTemp float64, elapsedPdpSt, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) float64
@@ -33,10 +37,6 @@ func newRraAbstractGeneric(index int, initialCarryOver float64) RraAbstractGener
 	return RraAbstractGeneric{
 		RraAbstract: RraAbstract{
 			Index: index,
-		},
-		ResetCpdFunc: func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric) {
-			cpdPrep.PrimaryValue = pdpTemp
-			cpdPrep.SecondaryValue = pdpTemp
 		},
 		InitializeCarryOverFunc: func(pdpTemp float64, elapsedPdpSt, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) float64 {
 			pdpIntoCdpCnt := (elapsedPdpSt - startPdpOffset) % pdpPerRow
@@ -118,7 +118,7 @@ func (r *RraAbstractGeneric) UpdateCdpPreps(pdpTemp []float64, elapsed ElapsedPd
 		// There is just one PDP pre CDP
 		if elapsed.Steps > 2 {
 			for i, pdp := range pdpTemp {
-				r.ResetCpdFunc(pdp, &r.CpdPreps[i])
+				r.CpdPreps[i].Reset(pdp)
 			}
 		}
 	}

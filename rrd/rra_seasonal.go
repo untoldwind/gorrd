@@ -4,6 +4,12 @@ import "math"
 
 const RraTypeSeasonal = "SEASONAL"
 
+type RraCpdPrepSeasonal struct {
+	RraCpdPrepBase
+	Seasonal     float64 `cdp:"2"`
+	LastSeasonal float64 `cdp:"3"`
+	InitFlat     uint64  `cdp:"6"`
+}
 type RraSeasonal struct {
 	RraAbstractGeneric
 }

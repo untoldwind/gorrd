@@ -4,6 +4,10 @@ import "math"
 
 const RraTypeFailures = "FAILURES"
 
+type RraCpdPrepFailures struct {
+	RraCpdPrepBase
+}
+
 type RraHwFailures struct {
 	RraAbstractGeneric
 }
@@ -16,10 +20,6 @@ func (r *RraHwFailures) DumpTo(rrdStore Store, dumper DataOutput) {
 func newRraFailures(index int, store Store) (*RraHwFailures, error) {
 	result := &RraHwFailures{
 		newRraAbstractGeneric(index, math.NaN()),
-	}
-	result.ResetCpdFunc = func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric) {
-		cpdPrep.PrimaryValue = 0
-		cpdPrep.SecondaryValue = 0
 	}
 
 	result.InitializeCdpFunc = func(pdpTemp float64, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) {

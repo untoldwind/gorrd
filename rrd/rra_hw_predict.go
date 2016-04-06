@@ -4,6 +4,16 @@ import "math"
 
 const RraTypeHwPredict = "HWPREDICT"
 
+type RraCpdPrepHwPredict struct {
+	RraCpdPrepBase
+	Intercept     float64 `cdp:"2"`
+	LastIntercept float64 `cdp:"3"`
+	Slope         float64 `cdp:"4"`
+	LastSlope     float64 `cdp:"5"`
+	NullCount     uint64  `cdp:"6"`
+	LastNullCount uint64  `cdp:"7"`
+}
+
 type RraHwPredict struct {
 	RraAbstractGeneric
 }
