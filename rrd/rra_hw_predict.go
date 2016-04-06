@@ -1,7 +1,5 @@
 package rrd
 
-import "math"
-
 const RraTypeHwPredict = "HWPREDICT"
 
 type RraCpdPrepHwPredict struct {
@@ -14,25 +12,73 @@ type RraCpdPrepHwPredict struct {
 	LastNullCount uint64  `cdp:"7"`
 }
 
+func (c *RraCpdPrepHwPredict) DumpTo(dumper DataOutput) {
+	c.RraCpdPrepBase.DumpTo(dumper)
+	dumper.DumpDouble("intercept", c.Intercept)
+	dumper.DumpDouble("last_intercept", c.LastIntercept)
+	dumper.DumpDouble("slope", c.Slope)
+	dumper.DumpDouble("last_slope", c.LastSlope)
+	dumper.DumpUnsignedLong("nan_count", c.NullCount)
+	dumper.DumpUnsignedLong("last_nan_count", c.LastNullCount)
+}
+
 type RraHwPredict struct {
-	RraAbstractGeneric
+	RraAbstract
+	Alpha           float64               `rra:"param1"`
+	Beta            float64               `rra:"param2"`
+	DependentRraIdx uint64                `rra:"param3"`
+	CpdPreps        []RraCpdPrepHwPredict `rra:"cpdPreps"`
+}
+
+func (r *RraHwPredict) GetPrimaryValues() []float64 {
+	result := make([]float64, len(r.CpdPreps))
+	for i, cpdPrep := range r.CpdPreps {
+		result[i] = cpdPrep.PrimaryValue
+	}
+	return result
+}
+
+func (r *RraHwPredict) GetSecondaryValues() []float64 {
+	result := make([]float64, len(r.CpdPreps))
+	for i, cpdPrep := range r.CpdPreps {
+		result[i] = cpdPrep.SecondaryValue
+	}
+	return result
+}
+
+func (r *RraHwPredict) UpdateCdpPreps(pdpTemp []float64, elapsed ElapsedPdpSteps) uint64 {
+	return 0
+}
+
+func (r *RraHwPredict) UpdateAberantCdp(pdpTemp []float64, first bool) {
 }
 
 func (r *RraHwPredict) DumpTo(rrdStore Store, dumper DataOutput) {
 	dumper.DumpString("cf", RraTypeHwPredict)
-	r.RraAbstractGeneric.DumpTo(rrdStore, dumper)
+	dumper.DumpUnsignedLong("pdp_per_row", r.PdpPerRow)
+	dumper.DumpSubFields("params", func(params DataOutput) error {
+		params.DumpDouble("hw_alpha", r.Alpha)
+		params.DumpDouble("hw_beta", r.Beta)
+		params.DumpUnsignedLong("dependent_rra_idx", r.DependentRraIdx)
+		return nil
+	})
+	dumper.DumpSubFields("cdp_prep", func(cdpPreps DataOutput) error {
+		for _, cdpPrep := range r.CpdPreps {
+			dumper.DumpSubFields("ds", func(ds DataOutput) error {
+				cdpPrep.DumpTo(ds)
+				return nil
+			})
+		}
+		return nil
+	})
+	r.DumpDatabase(rrdStore, dumper)
 }
 
 func newRraHwPredict(index int, store Store) (*RraHwPredict, error) {
 	result := &RraHwPredict{
-		newRraAbstractGeneric(index, math.NaN()),
-	}
-	result.InitializeCdpFunc = func(pdpTemp float64, pdpPerRow, startPdpOffset uint64, cpdPrep *RraCpdPrepGeneric) {
-		cpdPrep.PrimaryValue = pdpTemp
-	}
-
-	result.CalculateCdpValueFunc = func(pdpTemp float64, elapsedPdpSt uint64, cpdPrep *RraCpdPrepGeneric) float64 {
-		return pdpTemp
+		RraAbstract: RraAbstract{
+			Index: index,
+		},
 	}
 
 	if err := store.ReadRraParams(index, result); err != nil {

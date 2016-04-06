@@ -14,13 +14,9 @@ func (r *RraCpdPrepGeneric) Reset(pdp float64) {
 }
 
 func (c *RraCpdPrepGeneric) DumpTo(dumper DataOutput) {
-	dumper.DumpSubFields("ds", func(ds DataOutput) error {
-		ds.DumpDouble("primary_value", c.PrimaryValue)
-		ds.DumpDouble("secondary_value", c.SecondaryValue)
-		ds.DumpDouble("value", c.Value)
-		ds.DumpUnsignedLong("unknown_datapoints", c.UnknownDatapoints)
-		return nil
-	})
+	c.RraCpdPrepBase.DumpTo(dumper)
+	dumper.DumpDouble("value", c.Value)
+	dumper.DumpUnsignedLong("unknown_datapoints", c.UnknownDatapoints)
 }
 
 type RraAbstractGeneric struct {
@@ -49,14 +45,6 @@ func newRraAbstractGeneric(index int, initialCarryOver float64) RraAbstractGener
 			return pdpTemp
 		},
 	}
-}
-
-func (r *RraAbstractGeneric) GetRowCount() uint64 {
-	return r.RowCount
-}
-
-func (r *RraAbstractGeneric) GetPdpPerRow() uint64 {
-	return r.PdpPerRow
 }
 
 func (r *RraAbstractGeneric) GetPrimaryValues() []float64 {
@@ -149,20 +137,14 @@ func (r *RraAbstractGeneric) DumpTo(rrdStore Store, dumper DataOutput) {
 	})
 	dumper.DumpSubFields("cdp_prep", func(cdpPreps DataOutput) error {
 		for _, cdpPrep := range r.CpdPreps {
-			cdpPrep.DumpTo(cdpPreps)
+			dumper.DumpSubFields("ds", func(ds DataOutput) error {
+				cdpPrep.DumpTo(ds)
+				return nil
+			})
 		}
 		return nil
 	})
-	dumper.DumpSubFields("database", func(database DataOutput) error {
-		rowIterator, err := rrdStore.RowIterator(r.Index)
-		if err != nil {
-			return err
-		}
-		return ForEachRow(rowIterator, func(row *RraRow) error {
-			row.DumpTo(dumper)
-			return nil
-		})
-	})
+	r.DumpDatabase(rrdStore, dumper)
 }
 
 func minUInt64(a, b uint64) uint64 {

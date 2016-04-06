@@ -71,7 +71,7 @@ func (rrdtool rrdTool) checkDumpCompatibility1(rrdStart int, gauges, counters, d
 		"RRA:MIN:0.5:1:100",
 		"RRA:MAX:0.5:1:100",
 		"RRA:LAST:0.5:1:100",
-		//		"RRA:HWPREDICT:500:0.1:0.0035:100",
+	//	"RRA:HWPREDICT:500:0.1:0.0035:100",
 	); err != nil {
 		return false, err
 	}
