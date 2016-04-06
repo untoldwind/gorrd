@@ -59,7 +59,7 @@ func (rrdtool rrdTool) checkDumpCompatibility1(rrdStart int, gauges, counters, d
 	tempDir := os.TempDir()
 	rrdFileName := filepath.Join(tempDir, fmt.Sprintf("comp_dump1-%d-%d.rrd", time.Now().UnixNano(), rrdStart))
 	defer os.Remove(rrdFileName)
-
+	//fmt.Println(rrdFileName)
 	if err := rrdtool.create(rrdFileName,
 		strconv.Itoa(rrdStart),
 		"1",
@@ -71,6 +71,7 @@ func (rrdtool rrdTool) checkDumpCompatibility1(rrdStart int, gauges, counters, d
 		"RRA:MIN:0.5:1:100",
 		"RRA:MAX:0.5:1:100",
 		"RRA:LAST:0.5:1:100",
+		//		"RRA:HWPREDICT:500:0.1:0.0035:100",
 	); err != nil {
 		return false, err
 	}

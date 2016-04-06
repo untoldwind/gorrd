@@ -161,6 +161,14 @@ func (f *RrdRawFile) decodeRraCpdPreps(rraIndex, dsIndex int, rv reflect.Value) 
 	}
 	for i := 0; i < rv.Type().NumField(); i++ {
 		field := rv.Type().Field(i)
+
+		if field.Type.Kind() == reflect.Struct {
+			if err := f.decodeRraCpdPreps(rraIndex, dsIndex, rv.Field(i)); err != nil {
+				return err
+			}
+			continue
+		}
+
 		tag := field.Tag.Get("cdp")
 		if tag == "" {
 			continue
@@ -188,6 +196,14 @@ func (f *RrdRawFile) encodeRraCpdPreps(rraIndex, dsIndex int, rv reflect.Value) 
 	}
 	for i := 0; i < rv.Type().NumField(); i++ {
 		field := rv.Type().Field(i)
+
+		if field.Type.Kind() == reflect.Struct {
+			if err := f.encodeRraCpdPreps(rraIndex, dsIndex, rv.Field(i)); err != nil {
+				return err
+			}
+			continue
+		}
+
 		tag := field.Tag.Get("cdp")
 		if tag == "" {
 			continue

@@ -18,14 +18,22 @@ func newRra(index int, rraType string, store Store) (Rra, error) {
 	switch rraType {
 	case RraTypeAverage:
 		return newRraAverage(index, store)
+	case RraTypeDevPredict:
+		return newRraDevPredict(index, store)
+	case RraTypeDevSeasonal:
+		return newRraDevSeasonal(index, store)
 	case RraTypeFailures:
 		return newRraFailures(index, store)
+	case RraTypeHwPredict:
+		return newRraHwPredict(index, store)
 	case RraTypeMin:
 		return newRraMin(index, store)
 	case RraTypeMax:
 		return newRraMax(index, store)
 	case RraTypeLast:
 		return newRraLast(index, store)
+	case RraTypeSeasonal:
+		return newRraSeasonal(index, store)
 	}
 	return nil, errors.Errorf("Unknown rra type: %s", rraType)
 }

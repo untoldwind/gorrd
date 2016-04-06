@@ -3,8 +3,7 @@ package rrd
 import "math"
 
 type RraCpdPrepGeneric struct {
-	PrimaryValue      float64 `cdp:"8"`
-	SecondaryValue    float64 `cdp:"9"`
+	RraCpdPrepBase
 	Value             float64 `cdp:"0"`
 	UnknownDatapoints uint64  `cdp:"1"`
 }
@@ -20,9 +19,7 @@ func (c *RraCpdPrepGeneric) DumpTo(dumper DataOutput) {
 }
 
 type RraAbstractGeneric struct {
-	Index                   int
-	RowCount                uint64              `rra:"rowCount"`
-	PdpPerRow               uint64              `rra:"pdpPerRow"`
+	RraAbstract
 	XFilesFactor            float64             `rra:"param0"`
 	CpdPreps                []RraCpdPrepGeneric `rra:"cpdPreps"`
 	ResetCpdFunc            func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric)
@@ -34,7 +31,9 @@ type RraAbstractGeneric struct {
 
 func newRraAbstractGeneric(index int, initialCarryOver float64) RraAbstractGeneric {
 	return RraAbstractGeneric{
-		Index: index,
+		RraAbstract: RraAbstract{
+			Index: index,
+		},
 		ResetCpdFunc: func(pdpTemp float64, cpdPrep *RraCpdPrepGeneric) {
 			cpdPrep.PrimaryValue = pdpTemp
 			cpdPrep.SecondaryValue = pdpTemp
