@@ -34,10 +34,12 @@ func (f *CDataWriter) WriteUnival(val unival) error {
 
 func (f *CDataWriter) WriteUnivals(univals []unival) error {
 	f.alignOffset()
-	data := make([]byte, 8*len(univals))
+	data := make([]byte, f.valueSize*len(univals))
 
-	for i, val := range univals {
-		f.byteOrder.PutUint64(data[i*8:i*8+8], val.AsUnsignedLong())
+	offset := 0
+	for _, val := range univals {
+		f.univalToBytes(data[offset:], val)
+		offset += f.valueSize
 	}
 	return f.WriteBytes(data)
 }
@@ -48,18 +50,20 @@ func (f *CDataWriter) WriteDouble(val float64) error {
 
 func (f *CDataWriter) WriteDoubles(vals []float64) error {
 	f.alignOffset()
-	data := make([]byte, 8*len(vals))
+	data := make([]byte, f.valueSize*len(vals))
 
-	for i, val := range vals {
-		f.byteOrder.PutUint64(data[i*8:i*8+8], univalForDouble(val).AsUnsignedLong())
+	offset := 0
+	for _, val := range vals {
+		f.univalToBytes(data[offset:], univalForDouble(val))
+		offset += f.valueSize
 	}
 	return f.WriteBytes(data)
 }
 
 func (f *CDataWriter) WriteUnsignedLong(val uint64) error {
 	f.alignOffset()
-	data := make([]byte, 8)
-	f.byteOrder.PutUint64(data, val)
+	data := make([]byte, f.valueSize)
+	f.univalToBytes(data, univalForUnsignedLong(val))
 
 	return f.WriteBytes(data)
 }

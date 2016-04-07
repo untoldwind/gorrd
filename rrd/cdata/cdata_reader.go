@@ -2,8 +2,8 @@ package cdata
 
 import (
 	"bytes"
+
 	"github.com/go-errors/errors"
-	"math"
 )
 
 type CDataReader struct {
@@ -36,11 +36,11 @@ func (f *CDataReader) ReadCString(maxLen int) (string, error) {
 
 func (f *CDataReader) ReadUnival() (unival, error) {
 	f.alignOffset()
-	data, err := f.ReadBytes(8)
+	data, err := f.ReadBytes(f.valueSize)
 	if err != nil {
 		return 0, errors.Wrap(err, 0)
 	}
-	return unival(f.byteOrder.Uint64(data)), nil
+	return f.bytesToUnival(data), nil
 }
 
 func (f *CDataReader) ReadDouble() (float64, error) {
@@ -53,12 +53,14 @@ func (f *CDataReader) ReadDouble() (float64, error) {
 
 func (f *CDataReader) ReadDoubles(buffer []float64) error {
 	f.alignOffset()
-	data, err := f.ReadBytes(8 * len(buffer))
+	data, err := f.ReadBytes(f.valueSize * len(buffer))
 	if err != nil {
 		return err
 	}
+	offset := 0
 	for i := range buffer {
-		buffer[i] = math.Float64frombits(f.byteOrder.Uint64(data[i*8 : (i+1)*8]))
+		buffer[i] = f.bytesToUnival(data[offset:]).AsDouble()
+		offset += f.valueSize
 	}
 
 	return nil
@@ -74,13 +76,15 @@ func (f *CDataReader) ReadUnsignedLong() (uint64, error) {
 
 func (f *CDataReader) ReadUnivals(count int) ([]unival, error) {
 	f.alignOffset()
-	data, err := f.ReadBytes(8 * count)
+	data, err := f.ReadBytes(f.valueSize * count)
 	if err != nil {
 		return nil, errors.Wrap(err, 0)
 	}
+	offset := 0
 	result := make([]unival, count)
 	for i := range result {
-		result[i] = unival(f.byteOrder.Uint64(data[i*8 : (i+1)*8]))
+		result[i] = f.bytesToUnival(data[offset:])
+		offset += f.valueSize
 	}
 	return result, nil
 }

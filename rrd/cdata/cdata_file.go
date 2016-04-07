@@ -3,19 +3,23 @@ package cdata
 import (
 	"encoding/binary"
 	"os"
+
+	"github.com/go-errors/errors"
 )
 
 // CDataFile Helper to access files created from C code by directly mapping structs
 // Honours byte order as well as byte alignment
 type CDataFile struct {
-	file          *os.File
-	byteOrder     binary.ByteOrder
+	file *os.File
+	//	byteOrder     binary.ByteOrder
 	byteAlignment uint64
-	valueSize     uint64
+	valueSize     int
+	univalToBytes func([]byte, unival)
+	bytesToUnival func([]byte) unival
 }
 
 // Open a CDataFile
-func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteAlignment, valueSize uint64) (*CDataFile, error) {
+func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteAlignment uint64, valueSize int) (*CDataFile, error) {
 	flag := os.O_RDWR
 	if readOnly {
 		flag = os.O_RDONLY
@@ -26,16 +30,31 @@ func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteA
 		return nil, err
 	}
 
+	var univalToBytes func([]byte, unival)
+	var bytesToUnival func([]byte) unival
+	switch valueSize {
+	case 8:
+		univalToBytes = func(dst []byte, src unival) {
+			byteOrder.PutUint64(dst, src.AsUnsignedLong())
+		}
+		bytesToUnival = func(src []byte) unival {
+			return unival(byteOrder.Uint64(src))
+		}
+	default:
+		return nil, errors.Errorf("Invalid value size %d", valueSize)
+	}
 	return &CDataFile{
-		file:          file,
-		byteOrder:     byteOrder,
+		file: file,
+		//		byteOrder:     byteOrder,
 		byteAlignment: byteAlignment,
 		valueSize:     valueSize,
+		univalToBytes: univalToBytes,
+		bytesToUnival: bytesToUnival,
 	}, nil
 }
 
 func (f *CDataFile) ValueSize() uint64 {
-	return f.valueSize
+	return uint64(f.valueSize)
 }
 
 // Close the CDataFile
