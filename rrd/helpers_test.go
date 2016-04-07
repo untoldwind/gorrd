@@ -7,10 +7,9 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"math"
+	"math/big"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 
 	"github.com/go-errors/errors"
@@ -62,7 +61,7 @@ func (r rrdTool) update(rrdFileName string, updates ...string) error {
 	return cmd.Run()
 }
 
-func (r rrdTool) dump(rrdFileName string) (map[string]interface{}, error) {
+func (r rrdTool) dump(rrdFileName string) (string, error) {
 	output := bytes.NewBufferString("")
 
 	cmd := exec.Command(string(r), "dump", rrdFileName)
@@ -70,9 +69,9 @@ func (r rrdTool) dump(rrdFileName string) (map[string]interface{}, error) {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		return nil, err
+		return "", err
 	}
-	return flattenXml(output.String())
+	return output.String(), nil
 }
 
 type elementRef struct {
@@ -122,8 +121,8 @@ func flattenXml(xmlStr string) (map[string]interface{}, error) {
 				key += elementRef.String()
 			}
 			text := strings.TrimSpace(buffer.String())
-			floatVal, err := strconv.ParseFloat(text, 64)
-			if err == nil && !math.IsNaN(floatVal) {
+			floatVal, _, err := big.ParseFloat(text, 10, 40, big.ToNearestEven)
+			if err == nil {
 				result[key] = floatVal
 			} else {
 				result[key] = text
@@ -133,6 +132,43 @@ func flattenXml(xmlStr string) (map[string]interface{}, error) {
 			buffer.Write(token.(xml.CharData))
 		}
 	}
+}
+
+func compareXml(xml1Str, xml2Str string) (string, error) {
+	xml1, err := flattenXml(xml1Str)
+	if err != nil {
+		return "", err
+	}
+	xml2, err := flattenXml(xml2Str)
+	if err != nil {
+		return "", err
+	}
+	diffs := make([]string, 0)
+	for k, v1 := range xml1 {
+		v2, ok := xml2[k]
+		if !ok {
+			diffs = append(diffs, fmt.Sprintf("xml2 does not have %s", k))
+		} else if !almoastEqual(v1, v2) {
+			diffs = append(diffs, fmt.Sprintf("diff %s: %#v != %#v", k, v1, v2))
+		}
+	}
+	for k := range xml2 {
+		_, ok := xml1[k]
+		if !ok {
+			diffs = append(diffs, fmt.Sprintf("xml1 does not have %s", k))
+		}
+	}
+	return strings.Join(diffs, "\n"), nil
+}
+
+func almoastEqual(a, b interface{}) bool {
+	floatA, okA := a.(*big.Float)
+	floatB, okB := b.(*big.Float)
+
+	if okA && okB {
+		return floatA.Cmp(floatB) == 0
+	}
+	return a == b
 }
 
 func copyFile(src, dst string) error {

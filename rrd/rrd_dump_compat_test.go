@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -55,7 +54,7 @@ func TestDumpCompatibility(t *testing.T) {
 	properties.TestingRun(t)
 }
 
-func (rrdtool rrdTool) checkDumpCompatibility1(rrdStart int, gauges, counters, derives, absolutes []int) (bool, error) {
+func (rrdtool rrdTool) checkDumpCompatibility1(rrdStart int, gauges, counters, derives, absolutes []int) (string, error) {
 	tempDir := os.TempDir()
 	rrdFileName := filepath.Join(tempDir, fmt.Sprintf("comp_dump1-%d-%d.rrd", time.Now().UnixNano(), rrdStart))
 	defer os.Remove(rrdFileName)
@@ -67,13 +66,13 @@ func (rrdtool rrdTool) checkDumpCompatibility1(rrdStart int, gauges, counters, d
 		fmt.Sprintf("DS:counts:COUNTER:300:%d:%d", minCounter, maxCounter),
 		fmt.Sprintf("DS:derive:DERIVE:300:%d:%d", minDerive, maxDerive),
 		fmt.Sprintf("DS:absolute:ABSOLUTE:300:%d:%d", minAbsolute, maxAbsolute),
-		"RRA:AVERAGE:0.5:1:100",
-		"RRA:MIN:0.5:1:100",
-		"RRA:MAX:0.5:1:100",
-		"RRA:LAST:0.5:1:100",
-		"RRA:HWPREDICT:500:0.1:0.0035:100",
+		"RRA:AVERAGE:0.5:1:20",
+		"RRA:MIN:0.5:1:20",
+		"RRA:MAX:0.5:1:20",
+		"RRA:LAST:0.5:1:20",
+		"RRA:HWPREDICT:100:0.1:0.0035:20",
 	); err != nil {
-		return false, err
+		return "", err
 	}
 
 	numUpdates := len(gauges)
@@ -107,35 +106,25 @@ func (rrdtool rrdTool) checkDumpCompatibility1(rrdStart int, gauges, counters, d
 		updates[i] = fmt.Sprintf("%d:%s:%s:%s:%s", rrdStart+i+1, gauge, count, derive, absolute)
 	}
 	if err := rrdtool.update(rrdFileName, updates...); err != nil {
-		return false, err
+		return "", err
 	}
 
 	expectedResult, err := rrdtool.dump(rrdFileName)
 
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
 	actualResult, err := runDumpCommand(rrdFileName)
 
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
-	if !reflect.DeepEqual(expectedResult, actualResult) {
-		for k, v := range expectedResult {
-			aV, ok := actualResult[k]
-			if !ok {
-				fmt.Printf("Missing: %s\n", k)
-			} else if v != aV {
-				fmt.Printf("Diff %s: %#v %#v\n", k, v, aV)
-			}
-		}
-	}
-	return reflect.DeepEqual(expectedResult, actualResult), nil
+	return compareXml(expectedResult, actualResult)
 }
 
-func (rrdtool rrdTool) checkDumpCompatibility2(rrdStart int, counters, derives []float64) (bool, error) {
+func (rrdtool rrdTool) checkDumpCompatibility2(rrdStart int, counters, derives []float64) (string, error) {
 	tempDir := os.TempDir()
 	rrdFileName := filepath.Join(tempDir, fmt.Sprintf("comp_dump2-%d-%d.rrd", time.Now().UnixNano(), rrdStart))
 	defer os.Remove(rrdFileName)
@@ -150,7 +139,7 @@ func (rrdtool rrdTool) checkDumpCompatibility2(rrdStart int, counters, derives [
 		"RRA:MAX:0.5:1:100",
 		"RRA:LAST:0.5:1:100",
 	); err != nil {
-		return false, err
+		return "", err
 	}
 
 	numUpdates := len(counters)
@@ -170,22 +159,22 @@ func (rrdtool rrdTool) checkDumpCompatibility2(rrdStart int, counters, derives [
 		updates[i] = fmt.Sprintf("%d:%s:%s", rrdStart+i+1, count, derive)
 	}
 	if err := rrdtool.update(rrdFileName, updates...); err != nil {
-		return false, err
+		return "", err
 	}
 
 	expectedResult, err := rrdtool.dump(rrdFileName)
 
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
 	actualResult, err := runDumpCommand(rrdFileName)
 
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
-	return reflect.DeepEqual(expectedResult, actualResult), nil
+	return compareXml(expectedResult, actualResult)
 }
 
 func counterGen(start int) gopter.Gen {
@@ -195,24 +184,24 @@ func counterGen(start int) gopter.Gen {
 	}
 }
 
-func runDumpCommand(rrdFileName string) (map[string]interface{}, error) {
+func runDumpCommand(rrdFileName string) (string, error) {
 	rrd, err := cdata.OpenRrdRawFile(rrdFileName, true)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer rrd.Close()
 
 	buffer := bytes.NewBufferString("")
 	xmlDumper, err := dump.NewXmlOutput(buffer, true)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	if err := rrd.DumpTo(xmlDumper); err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return flattenXml(buffer.String())
+	return buffer.String(), nil
 }
 
 func integrateInts(v interface{}) interface{} {
