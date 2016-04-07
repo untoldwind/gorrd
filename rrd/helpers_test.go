@@ -121,7 +121,7 @@ func flattenXml(xmlStr string) (map[string]interface{}, error) {
 				key += elementRef.String()
 			}
 			text := strings.TrimSpace(buffer.String())
-			floatVal, _, err := big.ParseFloat(text, 10, 40, big.ToNearestEven)
+			floatVal, _, err := big.ParseFloat(text, 10, 30, big.ToNearestEven)
 			if err == nil {
 				result[key] = floatVal
 			} else {

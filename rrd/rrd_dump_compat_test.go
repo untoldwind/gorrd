@@ -32,7 +32,11 @@ func TestDumpCompatibility(t *testing.T) {
 	}
 
 	parameters := gopter.DefaultTestParameters()
-	parameters.MinSuccessfulTests = 10
+	if testing.Short() {
+		parameters.MinSuccessfulTests = 3
+	} else {
+		parameters.MinSuccessfulTests = 30
+	}
 	properties := gopter.NewProperties(parameters)
 
 	properties.Property("dump of gauge, counter, derive, absolute is compatile", prop.ForAllNoShrink(

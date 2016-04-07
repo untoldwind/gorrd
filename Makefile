@@ -17,6 +17,12 @@ test:
 	@go test -v ./commands/... ./config/... ./rrd/...
 	@$(MAKE) vet
 
+shorttest: export GOPATH=${PWD}/../../../..
+shorttest:
+	@echo "--> Running short tests"
+	@go test -short -v ./commands/... ./config/... ./rrd/...
+	@$(MAKE) vet
+
 coverage:
 	@echo "--> Running tests with coverage"
 	@echo "" > coverage.txt
