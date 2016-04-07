@@ -34,13 +34,7 @@ func (f *CDataWriter) WriteUnival(val unival) error {
 
 func (f *CDataWriter) WriteUnivals(univals []unival) error {
 	f.alignOffset()
-	data := make([]byte, f.valueSize*len(univals))
-
-	offset := 0
-	for _, val := range univals {
-		f.univalToBytes(data[offset:], val)
-		offset += f.valueSize
-	}
+	data := f.UnivalsToBytes(univals)
 	return f.WriteBytes(data)
 }
 

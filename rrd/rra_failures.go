@@ -6,7 +6,7 @@ const RraTypeFailures = "FAILURES"
 
 type RraCpdPrepFailures struct {
 	RraCpdPrepBase
-	History []uint64 `cdp:"scratch"`
+	History []byte `cdp:"raw"`
 }
 
 func (c *RraCpdPrepFailures) DumpToWitHistory(windowLen uint64, dumper DataOutput) {

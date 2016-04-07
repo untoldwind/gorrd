@@ -80,13 +80,7 @@ func (f *CDataReader) ReadUnivals(count int) ([]unival, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, 0)
 	}
-	offset := 0
-	result := make([]unival, count)
-	for i := range result {
-		result[i] = f.bytesToUnival(data[offset:])
-		offset += f.valueSize
-	}
-	return result, nil
+	return f.BytesToUnivals(data), nil
 }
 
 func (f *CDataReader) Seek(offset uint64) {

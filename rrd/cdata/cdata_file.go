@@ -77,3 +77,24 @@ func (f *CDataFile) Writer(startPosition uint64) *CDataWriter {
 		position:      startPosition,
 	}
 }
+
+func (f *CDataFile) UnivalsToBytes(univals []unival) []byte {
+	data := make([]byte, f.valueSize*len(univals))
+
+	offset := 0
+	for _, val := range univals {
+		f.univalToBytes(data[offset:], val)
+		offset += f.valueSize
+	}
+	return data
+}
+
+func (f *CDataFile) BytesToUnivals(data []byte) []unival {
+	offset := 0
+	result := make([]unival, len(data)/f.valueSize)
+	for i := range result {
+		result[i] = f.bytesToUnival(data[offset:])
+		offset += f.valueSize
+	}
+	return result
+}
