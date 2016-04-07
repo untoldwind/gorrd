@@ -31,15 +31,15 @@
 		},
 		{
 			"ImportPath": "github.com/leanovate/gopter",
-			"Rev": "6e2b9659591a4d5a9cd5c0c08731e6f71b2c7693"
+			"Rev": "e3057ee91061114f9629f3c64676af6ff9ba1ebd"
 		},
 		{
 			"ImportPath": "github.com/leanovate/gopter/gen",
-			"Rev": "6e2b9659591a4d5a9cd5c0c08731e6f71b2c7693"
+			"Rev": "e3057ee91061114f9629f3c64676af6ff9ba1ebd"
 		},
 		{
 			"ImportPath": "github.com/leanovate/gopter/prop",
-			"Rev": "6e2b9659591a4d5a9cd5c0c08731e6f71b2c7693"
+			"Rev": "e3057ee91061114f9629f3c64676af6ff9ba1ebd"
 		},
 		{
 			"ImportPath": "github.com/smartystreets/assertions",

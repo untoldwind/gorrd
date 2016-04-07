@@ -1,6 +1,7 @@
 PACKAGES=$(shell go list ./...)
 
 all: format
+	@go get github.com/smartystreets/goconvey
 	@go build -v ./...
 
 format:
@@ -16,8 +17,8 @@ coverage:
 	@echo "--> Running tests with coverage"
 	@echo "" > coverage.txt
 	for pkg in $(shell go list ./...); do \
-		go test -coverprofile=.pkg.coverage -covermode=atomic -v $$pkg ; \
-		cat .pkg.coverage >> coverage.txt ; \
+		(go test -coverprofile=.pkg.coverage -covermode=atomic -v $$pkg && \
+		cat .pkg.coverage >> coverage.txt) || exit 1; \
 	done
 	@rm .pkg.coverage
 	@$(MAKE) vet
