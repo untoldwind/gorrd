@@ -169,23 +169,37 @@ func (f *RrdRawFile) decodeRraCpdPreps(rraIndex, dsIndex int, rv reflect.Value) 
 			continue
 		}
 
+		scratch := f.cdpPreps[rraIndex][dsIndex].scratch
 		tag := field.Tag.Get("cdp")
 		if tag == "" {
 			continue
 		}
-		scratchIndex, err := strconv.ParseInt(tag, 10, 64)
-		if err != nil {
-			return err
-		}
-		switch field.Type.Kind() {
-		case reflect.Uint64:
-			rv.Field(i).SetUint(f.cdpPreps[rraIndex][dsIndex].scratch[scratchIndex].AsUnsignedLong())
-		case reflect.Float64:
-			rv.Field(i).SetFloat(f.cdpPreps[rraIndex][dsIndex].scratch[scratchIndex].AsDouble())
-		default:
-			return errors.Errorf("cpd field must have type uint64 or float64")
-		}
 
+		if tag == "scratch" && field.Type.Kind() == reflect.Slice {
+			switch field.Type.Elem().Kind() {
+			case reflect.Uint64:
+				convered := make([]uint64, len(scratch))
+				for i, v := range scratch {
+					convered[i] = v.AsUnsignedLong()
+				}
+				rv.Field(i).Set(reflect.ValueOf(convered))
+			default:
+				return errors.Errorf("cpd scatch must have type []uint64")
+			}
+		} else {
+			scratchIndex, err := strconv.ParseInt(tag, 10, 64)
+			if err != nil {
+				return err
+			}
+			switch field.Type.Kind() {
+			case reflect.Uint64:
+				rv.Field(i).SetUint(scratch[scratchIndex].AsUnsignedLong())
+			case reflect.Float64:
+				rv.Field(i).SetFloat(scratch[scratchIndex].AsDouble())
+			default:
+				return errors.Errorf("cpd field must have type uint64 or float64")
+			}
+		}
 	}
 	return nil
 }
@@ -204,23 +218,36 @@ func (f *RrdRawFile) encodeRraCpdPreps(rraIndex, dsIndex int, rv reflect.Value) 
 			continue
 		}
 
+		scratch := f.cdpPreps[rraIndex][dsIndex].scratch
 		tag := field.Tag.Get("cdp")
 		if tag == "" {
 			continue
 		}
-		scratchIndex, err := strconv.ParseInt(tag, 10, 64)
-		if err != nil {
-			return err
-		}
-		switch field.Type.Kind() {
-		case reflect.Uint64:
-			f.cdpPreps[rraIndex][dsIndex].scratch[scratchIndex] = univalForUnsignedLong(rv.Field(i).Uint())
-		case reflect.Float64:
-			f.cdpPreps[rraIndex][dsIndex].scratch[scratchIndex] = univalForDouble(rv.Field(i).Float())
-		default:
-			return errors.Errorf("cpd field must have type uint64 or float64")
-		}
 
+		if tag == "scratch" && field.Type.Kind() == reflect.Slice {
+			switch field.Type.Elem().Kind() {
+			case reflect.Uint64:
+				values := rv.Field(i).Interface().([]uint64)
+				for i, v := range values {
+					scratch[i] = univalForUnsignedLong(v)
+				}
+			default:
+				return errors.Errorf("cpd scatch must have type []uint64")
+			}
+		} else {
+			scratchIndex, err := strconv.ParseInt(tag, 10, 64)
+			if err != nil {
+				return err
+			}
+			switch field.Type.Kind() {
+			case reflect.Uint64:
+				scratch[scratchIndex] = univalForUnsignedLong(rv.Field(i).Uint())
+			case reflect.Float64:
+				scratch[scratchIndex] = univalForDouble(rv.Field(i).Float())
+			default:
+				return errors.Errorf("cpd field must have type uint64 or float64")
+			}
+		}
 	}
 	return nil
 }

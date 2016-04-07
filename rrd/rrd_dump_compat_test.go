@@ -33,7 +33,7 @@ func TestDumpCompatibility(t *testing.T) {
 	}
 
 	parameters := gopter.DefaultTestParameters()
-	parameters.MinSuccessfulTests = 20
+	parameters.MinSuccessfulTests = 10
 	properties := gopter.NewProperties(parameters)
 
 	properties.Property("dump of gauge, counter, derive, absolute is compatile", prop.ForAllNoShrink(
@@ -71,7 +71,7 @@ func (rrdtool rrdTool) checkDumpCompatibility1(rrdStart int, gauges, counters, d
 		"RRA:MIN:0.5:1:100",
 		"RRA:MAX:0.5:1:100",
 		"RRA:LAST:0.5:1:100",
-	//	"RRA:HWPREDICT:500:0.1:0.0035:100",
+		"RRA:HWPREDICT:500:0.1:0.0035:100",
 	); err != nil {
 		return false, err
 	}
@@ -122,6 +122,16 @@ func (rrdtool rrdTool) checkDumpCompatibility1(rrdStart int, gauges, counters, d
 		return false, err
 	}
 
+	if !reflect.DeepEqual(expectedResult, actualResult) {
+		for k, v := range expectedResult {
+			aV, ok := actualResult[k]
+			if !ok {
+				fmt.Printf("Missing: %s\n", k)
+			} else if v != aV {
+				fmt.Printf("Diff %s: %#v %#v\n", k, v, aV)
+			}
+		}
+	}
 	return reflect.DeepEqual(expectedResult, actualResult), nil
 }
 
