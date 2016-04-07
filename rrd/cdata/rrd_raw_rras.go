@@ -155,7 +155,7 @@ func (f *RrdRawFile) encodeRraParams(index int, rv reflect.Value) error {
 	return nil
 }
 
-func (f *RrdRawFile) readRras(reader *CDataReader) error {
+func (f *RrdRawFile) readRras(reader *RawDataReader) error {
 	f.rraDefs = make([]*rrdRawRraDef, f.header.rraCount)
 
 	var err error
@@ -168,7 +168,7 @@ func (f *RrdRawFile) readRras(reader *CDataReader) error {
 	return nil
 }
 
-func readRra(reader *CDataReader, index int) (*rrdRawRraDef, error) {
+func readRra(reader *RawDataReader, index int) (*rrdRawRraDef, error) {
 	rraType, err := reader.ReadCString(20)
 	if err != nil {
 		return nil, err

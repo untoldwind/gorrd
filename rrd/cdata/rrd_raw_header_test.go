@@ -37,7 +37,7 @@ func TestRrdRawHeader(t *testing.T) {
 
 		So(cmd.Run(), ShouldBeNil)
 
-		dataFile, err := OpenCDataFile(rrdFileName, true, binary.LittleEndian, 8, 8)
+		dataFile, err := OpenRawDataFile(rrdFileName, true, binary.LittleEndian, 8, 8)
 
 		So(err, ShouldBeNil)
 		So(dataFile, ShouldNotBeNil)

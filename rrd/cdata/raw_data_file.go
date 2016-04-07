@@ -7,9 +7,9 @@ import (
 	"github.com/go-errors/errors"
 )
 
-// CDataFile Helper to access files created from C code by directly mapping structs
+// RawDataFile Helper to access files created from C code by directly mapping structs
 // Honours byte order as well as byte alignment
-type CDataFile struct {
+type RawDataFile struct {
 	file *os.File
 	//	byteOrder     binary.ByteOrder
 	byteAlignment uint64
@@ -19,7 +19,7 @@ type CDataFile struct {
 }
 
 // Open a CDataFile
-func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteAlignment uint64, valueSize int) (*CDataFile, error) {
+func OpenRawDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteAlignment uint64, valueSize int) (*RawDataFile, error) {
 	flag := os.O_RDWR
 	if readOnly {
 		flag = os.O_RDONLY
@@ -43,7 +43,7 @@ func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteA
 	default:
 		return nil, errors.Errorf("Invalid value size %d", valueSize)
 	}
-	return &CDataFile{
+	return &RawDataFile{
 		file: file,
 		//		byteOrder:     byteOrder,
 		byteAlignment: byteAlignment,
@@ -53,32 +53,32 @@ func OpenCDataFile(name string, readOnly bool, byteOrder binary.ByteOrder, byteA
 	}, nil
 }
 
-func (f *CDataFile) ValueSize() uint64 {
+func (f *RawDataFile) ValueSize() uint64 {
 	return uint64(f.valueSize)
 }
 
 // Close the CDataFile
-func (f *CDataFile) Close() error {
+func (f *RawDataFile) Close() error {
 	return f.file.Close()
 }
 
-func (f *CDataFile) Reader(startPosition uint64) *CDataReader {
-	return &CDataReader{
-		CDataFile:     f,
+func (f *RawDataFile) Reader(startPosition uint64) *RawDataReader {
+	return &RawDataReader{
+		RawDataFile:   f,
 		startPosition: startPosition,
 		position:      startPosition,
 	}
 }
 
-func (f *CDataFile) Writer(startPosition uint64) *CDataWriter {
-	return &CDataWriter{
-		CDataFile:     f,
+func (f *RawDataFile) Writer(startPosition uint64) *RawDataWriter {
+	return &RawDataWriter{
+		RawDataFile:   f,
 		startPosition: startPosition,
 		position:      startPosition,
 	}
 }
 
-func (f *CDataFile) UnivalsToBytes(univals []unival) []byte {
+func (f *RawDataFile) UnivalsToBytes(univals []unival) []byte {
 	data := make([]byte, f.valueSize*len(univals))
 
 	offset := 0
@@ -89,7 +89,7 @@ func (f *CDataFile) UnivalsToBytes(univals []unival) []byte {
 	return data
 }
 
-func (f *CDataFile) BytesToUnivals(data []byte) []unival {
+func (f *RawDataFile) BytesToUnivals(data []byte) []unival {
 	offset := 0
 	result := make([]unival, len(data)/f.valueSize)
 	for i := range result {

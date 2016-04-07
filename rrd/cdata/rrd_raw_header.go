@@ -13,7 +13,7 @@ type rrdRawHeader struct {
 	pdpStep         uint64
 }
 
-func (f *RrdRawFile) readVersionHeader(reader *CDataReader) error {
+func (f *RrdRawFile) readVersionHeader(reader *RawDataReader) error {
 	if cookie, err := reader.ReadCString(4); err != nil {
 		return err
 	} else if cookie != rrdCookie {

@@ -7,7 +7,7 @@ type rrdPdpPrep struct {
 
 const rrdRawPdpPrepSize = 32 + 8*10
 
-func (f *RrdRawFile) readPdpPreps(reader *CDataReader) error {
+func (f *RrdRawFile) readPdpPreps(reader *RawDataReader) error {
 	f.pdpPreps = make([]*rrdPdpPrep, f.header.datasourceCount)
 
 	var err error
@@ -20,7 +20,7 @@ func (f *RrdRawFile) readPdpPreps(reader *CDataReader) error {
 	return nil
 }
 
-func (f *RrdRawFile) readPdpPrep(reader *CDataReader) (*rrdPdpPrep, error) {
+func (f *RrdRawFile) readPdpPrep(reader *RawDataReader) (*rrdPdpPrep, error) {
 	value, err := reader.ReadCString(30)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (f *RrdRawFile) storePdpPreps() error {
 	return nil
 }
 
-func storePdpPrep(writer *CDataWriter, pdpPrep *rrdPdpPrep) error {
+func storePdpPrep(writer *RawDataWriter, pdpPrep *rrdPdpPrep) error {
 	if err := writer.WriteCString(pdpPrep.lastDatasourceValue, 30); err != nil {
 		return err
 	}

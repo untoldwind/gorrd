@@ -13,7 +13,7 @@ type rrdCdpPrep struct {
 
 const rrdRawCdpPrepSize = 10 * 8
 
-func (f *RrdRawFile) readCdpPreps(reader *CDataReader) error {
+func (f *RrdRawFile) readCdpPreps(reader *RawDataReader) error {
 	f.cdpPreps = make([][]*rrdCdpPrep, f.header.rraCount)
 
 	var err error
@@ -29,7 +29,7 @@ func (f *RrdRawFile) readCdpPreps(reader *CDataReader) error {
 	return nil
 }
 
-func (f *RrdRawFile) readCdpPrep(reader *CDataReader) (*rrdCdpPrep, error) {
+func (f *RrdRawFile) readCdpPrep(reader *RawDataReader) (*rrdCdpPrep, error) {
 	scratch, err := reader.ReadUnivals(10)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (f *RrdRawFile) storeCdpPreps() error {
 	return nil
 }
 
-func storeCdpPrep(writer *CDataWriter, cdpPrep *rrdCdpPrep) error {
+func storeCdpPrep(writer *RawDataWriter, cdpPrep *rrdCdpPrep) error {
 	if err := writer.WriteUnivals(cdpPrep.scratch); err != nil {
 		return err
 	}

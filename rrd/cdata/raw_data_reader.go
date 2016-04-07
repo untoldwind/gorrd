@@ -6,13 +6,13 @@ import (
 	"github.com/go-errors/errors"
 )
 
-type CDataReader struct {
-	*CDataFile
+type RawDataReader struct {
+	*RawDataFile
 	startPosition uint64
 	position      uint64
 }
 
-func (f *CDataReader) ReadBytes(len int) ([]byte, error) {
+func (f *RawDataReader) ReadBytes(len int) ([]byte, error) {
 	data := make([]byte, len)
 	if count, err := f.file.ReadAt(data, int64(f.position)); err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func (f *CDataReader) ReadBytes(len int) ([]byte, error) {
 	return data, nil
 }
 
-func (f *CDataReader) ReadCString(maxLen int) (string, error) {
+func (f *RawDataReader) ReadCString(maxLen int) (string, error) {
 	data, err := f.ReadBytes(maxLen)
 	if err != nil {
 		return "", nil
@@ -34,7 +34,7 @@ func (f *CDataReader) ReadCString(maxLen int) (string, error) {
 	return "", errors.Errorf("Expected null terminated string")
 }
 
-func (f *CDataReader) ReadUnival() (unival, error) {
+func (f *RawDataReader) ReadUnival() (unival, error) {
 	f.alignOffset()
 	data, err := f.ReadBytes(f.valueSize)
 	if err != nil {
@@ -43,7 +43,7 @@ func (f *CDataReader) ReadUnival() (unival, error) {
 	return f.bytesToUnival(data), nil
 }
 
-func (f *CDataReader) ReadDouble() (float64, error) {
+func (f *RawDataReader) ReadDouble() (float64, error) {
 	unival, err := f.ReadUnival()
 	if err != nil {
 		return 0, err
@@ -51,7 +51,7 @@ func (f *CDataReader) ReadDouble() (float64, error) {
 	return unival.AsDouble(), nil
 }
 
-func (f *CDataReader) ReadDoubles(buffer []float64) error {
+func (f *RawDataReader) ReadDoubles(buffer []float64) error {
 	f.alignOffset()
 	data, err := f.ReadBytes(f.valueSize * len(buffer))
 	if err != nil {
@@ -66,7 +66,7 @@ func (f *CDataReader) ReadDoubles(buffer []float64) error {
 	return nil
 }
 
-func (f *CDataReader) ReadUnsignedLong() (uint64, error) {
+func (f *RawDataReader) ReadUnsignedLong() (uint64, error) {
 	unival, err := f.ReadUnival()
 	if err != nil {
 		return 0, err
@@ -74,7 +74,7 @@ func (f *CDataReader) ReadUnsignedLong() (uint64, error) {
 	return unival.AsUnsignedLong(), nil
 }
 
-func (f *CDataReader) ReadUnivals(count int) ([]unival, error) {
+func (f *RawDataReader) ReadUnivals(count int) ([]unival, error) {
 	f.alignOffset()
 	data, err := f.ReadBytes(f.valueSize * count)
 	if err != nil {
@@ -83,15 +83,15 @@ func (f *CDataReader) ReadUnivals(count int) ([]unival, error) {
 	return f.BytesToUnivals(data), nil
 }
 
-func (f *CDataReader) Seek(offset uint64) {
+func (f *RawDataReader) Seek(offset uint64) {
 	f.position = f.startPosition + offset
 }
 
-func (f *CDataReader) CurPosition() uint64 {
+func (f *RawDataReader) CurPosition() uint64 {
 	return f.position
 }
 
-func (f *CDataReader) alignOffset() {
+func (f *RawDataReader) alignOffset() {
 	mod := f.position % f.byteAlignment
 	if mod == 0 {
 		return

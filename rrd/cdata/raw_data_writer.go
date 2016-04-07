@@ -2,13 +2,13 @@ package cdata
 
 import "github.com/go-errors/errors"
 
-type CDataWriter struct {
-	*CDataFile
+type RawDataWriter struct {
+	*RawDataFile
 	startPosition uint64
 	position      uint64
 }
 
-func (f *CDataWriter) WriteBytes(data []byte) error {
+func (f *RawDataWriter) WriteBytes(data []byte) error {
 	if count, err := f.file.WriteAt(data, int64(f.position)); err != nil {
 		return errors.Wrap(err, 0)
 	} else if count != len(data) {
@@ -18,7 +18,7 @@ func (f *CDataWriter) WriteBytes(data []byte) error {
 	return nil
 }
 
-func (f *CDataWriter) WriteCString(str string, maxLen int) error {
+func (f *RawDataWriter) WriteCString(str string, maxLen int) error {
 	if len([]byte(str)) >= maxLen-1 {
 		return errors.Errorf("String too long len(%s) >= %d", str, maxLen+1)
 	}
@@ -28,21 +28,21 @@ func (f *CDataWriter) WriteCString(str string, maxLen int) error {
 	return f.WriteBytes(data)
 }
 
-func (f *CDataWriter) WriteUnival(val unival) error {
+func (f *RawDataWriter) WriteUnival(val unival) error {
 	return f.WriteUnsignedLong(val.AsUnsignedLong())
 }
 
-func (f *CDataWriter) WriteUnivals(univals []unival) error {
+func (f *RawDataWriter) WriteUnivals(univals []unival) error {
 	f.alignOffset()
 	data := f.UnivalsToBytes(univals)
 	return f.WriteBytes(data)
 }
 
-func (f *CDataWriter) WriteDouble(val float64) error {
+func (f *RawDataWriter) WriteDouble(val float64) error {
 	return f.WriteUnival(univalForDouble(val))
 }
 
-func (f *CDataWriter) WriteDoubles(vals []float64) error {
+func (f *RawDataWriter) WriteDoubles(vals []float64) error {
 	f.alignOffset()
 	data := make([]byte, f.valueSize*len(vals))
 
@@ -54,7 +54,7 @@ func (f *CDataWriter) WriteDoubles(vals []float64) error {
 	return f.WriteBytes(data)
 }
 
-func (f *CDataWriter) WriteUnsignedLong(val uint64) error {
+func (f *RawDataWriter) WriteUnsignedLong(val uint64) error {
 	f.alignOffset()
 	data := make([]byte, f.valueSize)
 	f.univalToBytes(data, univalForUnsignedLong(val))
@@ -62,15 +62,15 @@ func (f *CDataWriter) WriteUnsignedLong(val uint64) error {
 	return f.WriteBytes(data)
 }
 
-func (f *CDataWriter) Seek(offset uint64) {
+func (f *RawDataWriter) Seek(offset uint64) {
 	f.position = f.startPosition + offset
 }
 
-func (f *CDataWriter) CurPosition() uint64 {
+func (f *RawDataWriter) CurPosition() uint64 {
 	return f.position
 }
 
-func (f *CDataWriter) alignOffset() {
+func (f *RawDataWriter) alignOffset() {
 	mod := f.position % f.byteAlignment
 	if mod == 0 {
 		return

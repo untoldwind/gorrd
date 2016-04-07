@@ -12,7 +12,7 @@ const rrdCookie = "RRD"
 const rrdFloatCookie = 8.642135E130
 
 type RrdRawFile struct {
-	dataFile *CDataFile
+	dataFile *RawDataFile
 
 	header     *rrdRawHeader
 	lastUpdate time.Time
@@ -32,7 +32,7 @@ type RrdRawFile struct {
 }
 
 func OpenRrdRawFile(name string, readOnly bool) (*rrd.Rrd, error) {
-	dataFile, err := OpenCDataFile(name, readOnly, binary.LittleEndian, 8, 8)
+	dataFile, err := OpenRawDataFile(name, readOnly, binary.LittleEndian, 8, 8)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (f *RrdRawFile) Close() {
 	f.dataFile.Close()
 }
 
-func (f *RrdRawFile) readHeaders(reader *CDataReader) error {
+func (f *RrdRawFile) readHeaders(reader *RawDataReader) error {
 	if err := f.readVersionHeader(reader); err != nil {
 		return errors.Wrap(err, 0)
 	}

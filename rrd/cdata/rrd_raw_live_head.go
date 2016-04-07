@@ -7,7 +7,7 @@ import (
 
 const rrdRawLiveHeaderSize = 16
 
-func (f *RrdRawFile) readLiveHead(reader *CDataReader) error {
+func (f *RrdRawFile) readLiveHead(reader *RawDataReader) error {
 	timeSec, err := reader.ReadUnival()
 	if err != nil {
 		return err

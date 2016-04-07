@@ -158,7 +158,7 @@ func (f *RrdRawFile) encodeDatasourceParams(index int, rv reflect.Value) error {
 	return nil
 }
 
-func (f *RrdRawFile) readDatasources(reader *CDataReader) error {
+func (f *RrdRawFile) readDatasources(reader *RawDataReader) error {
 	f.datasourceDefs = make([]*rrdRawDatasourceDef, f.header.datasourceCount)
 
 	var err error
@@ -171,7 +171,7 @@ func (f *RrdRawFile) readDatasources(reader *CDataReader) error {
 	return nil
 }
 
-func readDatasource(reader *CDataReader) (*rrdRawDatasourceDef, error) {
+func readDatasource(reader *RawDataReader) (*rrdRawDatasourceDef, error) {
 	name, err := reader.ReadCString(20)
 	if err != nil {
 		return nil, err

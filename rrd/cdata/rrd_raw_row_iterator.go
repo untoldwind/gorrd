@@ -22,7 +22,7 @@ func (f *RrdRawFile) RowIterator(rraIndex int) (rrd.RraRowIterator, error) {
 }
 
 type rrdRawRowIterator struct {
-	reader     *CDataReader
+	reader     *RawDataReader
 	row        uint64
 	colCount   uint64
 	rowCount   uint64
